@@ -209,9 +209,10 @@ class StatusManager:
         tasks = self.tasks.get_all()
         statuses = self.__get_statuses(group.id)
         dtos: list[VariantDto] = []
+        checked = [Status.Checked, Status.CheckedFailed, Status.CheckedSubmitted]
         for var in variants:
             dto = self.__get_variant(group, var, tasks, statuses, seed, config)
-            if hide_pending and all(status.status == Status.NotSubmitted for status in dto.statuses):
+            if hide_pending and any(status.status not in checked for status in dto.statuses):
                 continue
             dtos.append(dto)
         return GroupDto(group, [TaskDto(task, seed) for task in tasks], dtos)
