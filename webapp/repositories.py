@@ -548,6 +548,13 @@ class StudentRepository:
                 .filter_by(id=student) \
                 .update(dict(group=group))
 
+    def get_free_variant(self, group: int):
+        with self.db.create_session() as session:
+            var = session.query(func.max(Student.variant)) \
+                .filter_by(group=group) \
+                .scalar()
+            return var + 1
+
     def update_variant(self, student: int, variant_id: int | None):
         with self.db.create_session() as session:
             session.query(Student) \

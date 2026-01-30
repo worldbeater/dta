@@ -91,8 +91,7 @@
     </div>
     {% else %}
     <div class="form-group mb-2">
-      <textarea id="code-textarea" name="code" type="text" class="form-control" {% if status.disabled or registration
-        and not student %}disabled{%endif%} placeholder="Ответ на задание"
+      <textarea id="code-textarea" name="code" type="text" class="form-control" {% if disabled %}disabled{%endif%} placeholder="Ответ на задание"
         style="min-height: 250px;font-family: monospace, monospace;">{{ form.code.data if form.code.data }}</textarea>
       <small class="form-text text-muted">
         <div>
@@ -113,8 +112,7 @@
     {{ form.csrf_token }}
     <div class="row">
       <div class="col-md-8">
-        <button type="submit" class="btn btn-primary w-100 d-block" {% if status.disabled or registration and not
-          student %}disabled{%endif%}>
+        <button type="submit" class="btn btn-primary w-100 d-block" {% if disabled %}disabled{%endif%}>
           Отправить решение на проверку
         </button>
       </div>
@@ -131,7 +129,7 @@
   </form>
 </div>
 
-{% if highlight and not (status.disabled or registration and not student) %}
+{% if highlight and not disabled %}
 <script src="{{ url_for('static', filename='js/codemirror.min.js') }}"></script>
 <script src="{{ url_for('static', filename='js/python.min.js') }}"></script>
 <script type="text/javascript">
