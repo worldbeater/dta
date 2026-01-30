@@ -28,7 +28,8 @@ db = AppDatabase(lambda: config.config.connection_string)
 ext = ExternalTaskManager(db.groups, db.tasks)
 students = StudentManager(config, db.students, db.mailers)
 ach = AchievementManager(config)
-statuses = StatusManager(db.tasks, db.groups, db.variants, db.statuses, config, db.seeds, db.checks, ach, ext, db.students)
+statuses = StatusManager(db.tasks, db.groups, db.variants, db.statuses, config,
+                         db.seeds, db.checks, ach, ext, db.students)
 exports = ExportManager(db.groups, db.messages, statuses, db.variants, db.tasks, db.students, students)
 
 
