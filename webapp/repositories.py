@@ -481,10 +481,11 @@ class StudentRepository:
     def __init__(self, db: DbContextManager):
         self.db = db
 
-    def get_all_by_group(self, group_id: int) -> list[Student] | None:
+    def get_group_students(self, group_id: int) -> list[Student]:
         with self.db.create_session() as session:
-            students = session.query(Student).filter(Student.group == group_id).all()
-            return students if students else None
+            return session.query(Student) \
+                .filter(Student.group == group_id) \
+                .all()
 
     def get_by_id(self, id: int) -> Student | None:
         with self.db.create_session() as session:

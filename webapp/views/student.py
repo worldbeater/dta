@@ -34,7 +34,7 @@ db = AppDatabase(lambda: config.config.connection_string)
 
 ach = AchievementManager(config)
 ext = ExternalTaskManager(db.groups, db.tasks)
-statuses = StatusManager(db.tasks, db.groups, db.variants, db.statuses, config, db.seeds, db.checks, ach, ext)
+statuses = StatusManager(db.tasks, db.groups, db.variants, db.statuses, config, db.seeds, db.checks, ach, ext, db.students)
 
 groups = GroupManager(db.groups, db.seeds, ext)
 students = StudentManager(config, db.students, db.mailers)

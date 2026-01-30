@@ -182,8 +182,9 @@ class TaskStatusDto:
 
 
 class VariantDto:
-    def __init__(self, variant: Variant, statuses: list[TaskStatusDto]):
+    def __init__(self, variant: Variant, statuses: list[TaskStatusDto], student: Student | None):
         self.id = int(variant.id)
+        self.email = student.email if student else ''
         self.statuses = statuses
         self.earned = sum(s.earned for s in statuses if s.earned > 1)
         self.solved = sum(s.status in [
