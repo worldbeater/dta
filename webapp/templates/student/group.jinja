@@ -70,9 +70,13 @@
 <div class="alert alert-primary" role="alert">
 <b>Внимание!</b> После выбора группы изменить Ваш выбор сможет только преподаватель.
 </div>
+{% if selectable %}
 <a class="btn btn-outline-primary w-100 d-block" href="/group/select/{{ group.id }}">
   Подтвердить выбор группы
 </a>
+{% else %}
+❗ В настоящий момент все варианты группы заняты. Свяжитесь с преподавателем для переопределения настроек.
+{% endif %}
 {% else %}
 <h6 class="card-subtitle mb-3 text-muted">
   Нажмите на соответствующую Вашему варианту ячейку, чтобы перейти к задаче.

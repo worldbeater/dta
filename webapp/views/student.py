@@ -138,6 +138,7 @@ def group(student: Student | None, gid: int):
         return redirect("/login")
     if student and student.group is not None and student.group != gid:
         return redirect("/")
+    selectable = db.students.get_free_variant(gid) < 40
     exam = ext.is_exam_active()
     hide_pending = exam and request.args.get('hide_pending', False)
     group = statuses.get_group_statuses(gid, hide_pending)
@@ -152,13 +153,14 @@ def group(student: Student | None, gid: int):
         group_rating=config.config.groups,
         student=student,
         exam=exam,
+        selectable=selectable,
     )
 
 
 @blueprint.route("/group/select/<int:gid>", methods=["GET"])
 @authorize(db.students, lambda _: True)
 def group_select(student: Student, gid: int):
-    if student.group is None:
+    if student.group is None and db.students.get_free_variant(gid) < 40:
         db.students.update_group(student.id, gid)
         vid = db.students.get_free_variant(gid)
         db.students.update_variant(student.id, vid)
