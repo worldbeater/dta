@@ -553,7 +553,7 @@ class StudentRepository:
         with self.db.create_session() as session:
             var = session.query(func.max(Student.variant)) \
                 .filter_by(group=group) \
-                .scalar()
+                .scalar() or 0
             return var + 1
 
     def update_variant(self, student: int, variant_id: int | None):
