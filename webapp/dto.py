@@ -167,31 +167,30 @@ class TaskStatusDto:
 
     @property
     def show_achievements(self) -> bool:
-        return self.achievements and self.map_status({
-            Status.Submitted: False,
-            Status.Failed: False,
-            Status.NotSubmitted: False,
-            Status.Checked: True,
-            Status.CheckedSubmitted: True,
-            Status.CheckedFailed: True,
-            Status.Verified: True,
-            Status.VerifiedSubmitted: True,
-            Status.VerifiedFailed: True,
-        })
+        return self.achievements and self.status in [
+            Status.Checked,
+            Status.CheckedSubmitted,
+            Status.CheckedFailed,
+            Status.Verified,
+            Status.VerifiedSubmitted,
+            Status.VerifiedFailed,
+        ]
 
     @property
     def can_verify(self) -> bool:
-        return self.map_status({
-            Status.Submitted: False,
-            Status.Failed: False,
-            Status.NotSubmitted: False,
-            Status.Checked: True,
-            Status.CheckedSubmitted: True,
-            Status.CheckedFailed: True,
-            Status.Verified: False,
-            Status.VerifiedSubmitted: False,
-            Status.VerifiedFailed: False,
-        })
+        return self.status in [
+            Status.Checked,
+            Status.CheckedSubmitted,
+            Status.CheckedFailed,
+        ]
+
+    @property
+    def can_unverify(self) -> bool:
+        return self.status in [
+            Status.Verified,
+            Status.VerifiedSubmitted,
+            Status.VerifiedFailed,
+        ]
 
     @property
     def disabled(self) -> bool:

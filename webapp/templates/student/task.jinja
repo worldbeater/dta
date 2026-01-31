@@ -131,6 +131,14 @@
         </a>
       </div>
       {% endif %}
+      {% if status.can_unverify %}
+      <div class="col-md-4">
+        <a class="btn btn-outline-danger w-100 d-block"
+           href="/teacher/unverify/group/{{ status.group }}/variant/{{ status.variant }}/task/{{ status.task }}">
+          Задача не защищена ❌
+        </a>
+      </div>
+      {% endif %}
       {% endif %}
     </div>
     {% endif %}

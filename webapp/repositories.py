@@ -271,6 +271,19 @@ class TaskStatusRepository:
                 status = existing.status
         return self.create_or_update(task, variant, group, existing.code, status, existing.output, existing.ip)
 
+    def unverify(self, task: int, variant: int, group: int):
+        existing = self.get_task_status(task, variant, group)
+        match existing.status:
+            case Status.Verified:
+                status = Status.Checked
+            case Status.VerifiedFailed:
+                status = Status.CheckedFailed
+            case Status.VerifiedSubmitted:
+                status = Status.CheckedSubmitted
+            case _:
+                status = existing.status
+        return self.create_or_update(task, variant, group, existing.code, status, existing.output, existing.ip)
+
     def create_or_update(self, task: int, variant: int, group: int, code: str, status: int, output: str, ip: str):
         now = datetime.datetime.now()
         with self.db.create_session() as session:
