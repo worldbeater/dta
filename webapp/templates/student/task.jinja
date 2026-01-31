@@ -67,7 +67,7 @@
   </h6>
   {% if status.achievements %}
   {% for dto in status.achievements %}
-  <div class="callout callout-{{ 'success' if dto.active else 'default text-muted' }}">
+  <div class="callout callout-{{ status.color if dto.active else 'default text-muted' }}">
     <div>{{ dto.title }} {{ '✓' if dto.active else '' }}</div>
     <small>{{ dto.description }}</small>
   </div>
@@ -111,9 +111,9 @@
     {% endif %}
     {{ form.csrf_token }}
     <div class="row">
-      <div class="col-md-8">
+      <div class="col-md-4">
         <button type="submit" class="btn btn-primary w-100 d-block" {% if disabled %}disabled{%endif%}>
-          Отправить решение на проверку
+          Отправить код на проверку
         </button>
       </div>
       {% if student and student.teacher %}
@@ -123,6 +123,14 @@
           История решений 📕
         </a>
       </div>
+      {% if status.can_verify %}
+      <div class="col-md-4">
+        <a class="btn btn-outline-success w-100 d-block"
+           href="/teacher/verify/group/{{ status.group }}/variant/{{ status.variant }}/task/{{ status.task }}">
+          Задача защищена ✅
+        </a>
+      </div>
+      {% endif %}
       {% endif %}
     </div>
     {% endif %}

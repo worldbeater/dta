@@ -192,9 +192,9 @@ class TaskStatusRepository:
         with self.db.create_session() as session:
             statuses = session.query(Group, TaskStatus) \
                 .join(TaskStatus, TaskStatus.group == Group.id) \
-                .filter((TaskStatus.status == Status.Checked) |
-                        (TaskStatus.status == Status.CheckedFailed) |
-                        (TaskStatus.status == Status.CheckedSubmitted)) \
+                .filter((TaskStatus.status == Status.Verified) |
+                        (TaskStatus.status == Status.VerifiedFailed) |
+                        (TaskStatus.status == Status.VerifiedSubmitted)) \
                 .all()
             return statuses
 
@@ -228,19 +228,45 @@ class TaskStatusRepository:
                 .update(dict(achievements=None))
 
     def check(self, task: int, variant: int, group: int, code: str, ok: bool, output: str, ip: str):
-        def status():
-            existing = self.get_task_status(task, variant, group)
-            if existing and existing.status in [Status.Checked, Status.CheckedFailed, Status.CheckedSubmitted]:
-                return Status.Checked if ok else Status.CheckedFailed
-            return Status.Checked if ok else Status.Failed
-
-        return self.create_or_update(task, variant, group, code, status(), output, ip)
+        existing = self.get_task_status(task, variant, group)
+        match (ok, existing and existing.status):
+            case (True, Status.Checked | Status.CheckedFailed | Status.CheckedSubmitted):
+                status = Status.Checked
+            case (True, Status.Verified | Status.VerifiedFailed | Status.VerifiedSubmitted):
+                status = Status.Verified
+            case (True, _):
+                status = Status.Checked
+            case (False, Status.Checked | Status.CheckedFailed | Status.CheckedSubmitted):
+                status = Status.CheckedFailed
+            case (False, Status.Verified | Status.VerifiedFailed | Status.VerifiedSubmitted):
+                status = Status.VerifiedFailed
+            case (False, _):
+                status = Status.Failed
+        return self.create_or_update(task, variant, group, code, status, output, ip)
 
     def submit_task(self, task: int, variant: int, group: int, code: str, ip: str) -> TaskStatus:
-        checked = [Status.Checked, Status.CheckedFailed, Status.CheckedSubmitted]
         existing = self.get_task_status(task, variant, group)
-        status = Status.CheckedSubmitted if existing and existing.status in checked else Status.Submitted
+        match existing and existing.status:
+            case Status.Checked | Status.CheckedFailed | Status.CheckedSubmitted:
+                status = Status.CheckedSubmitted
+            case Status.Verified | Status.VerifiedFailed | Status.VerifiedSubmitted:
+                status = Status.VerifiedSubmitted
+            case _:
+                status = Status.Submitted
         return self.create_or_update(task, variant, group, code, status, None, ip)
+
+    def verify(self, task: int, variant: int, group: int):
+        existing = self.get_task_status(task, variant, group)
+        match existing.status:
+            case Status.Checked:
+                status = Status.Verified
+            case Status.CheckedFailed:
+                status = Status.VerifiedFailed
+            case Status.CheckedSubmitted:
+                status = Status.VerifiedSubmitted
+            case _:
+                status = existing.status
+        return self.create_or_update(task, variant, group, existing.code, status, existing.output, existing.ip)
 
     def create_or_update(self, task: int, variant: int, group: int, code: str, status: int, output: str, ip: str):
         now = datetime.datetime.now()
@@ -357,7 +383,7 @@ class MessageCheckRepository:
     def checked(self) -> list[MessageCheck]:
         with self.db.create_session() as session:
             return session.query(MessageCheck) \
-                .filter_by(status=Status.Checked) \
+                .filter(MessageCheck.status.in_([Status.Checked, Status.Verified])) \
                 .all()
 
     def get_by_student(self, student: Student, skip: int, take: int) -> list[tuple[MessageCheck, Message]]:

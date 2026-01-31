@@ -47,6 +47,9 @@ class Status(enum.IntEnum):
     NotSubmitted = 4
     CheckedSubmitted = 5
     CheckedFailed = 6
+    Verified = 7
+    VerifiedSubmitted = 8
+    VerifiedFailed = 9
 
 
 class TypeOfTask(enum.IntEnum):

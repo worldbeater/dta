@@ -113,9 +113,12 @@ class TaskStatusDto:
     def cell_background(self) -> str:
         return self.map_status({
             Status.Submitted: "inherit",
-            Status.Checked: "#e3ffee",
-            Status.CheckedSubmitted: "#e3ffee",
-            Status.CheckedFailed: "#e3ffee",
+            Status.Checked: "#fff9e3",
+            Status.CheckedSubmitted: "#fff9e3",
+            Status.CheckedFailed: "#fff9e3",
+            Status.Verified: "#e3ffee",
+            Status.VerifiedSubmitted: "#e3ffee",
+            Status.VerifiedFailed: "#e3ffee",
             Status.Failed: "#ffe3ee",
             Status.NotSubmitted: "inherit",
         })
@@ -127,6 +130,9 @@ class TaskStatusDto:
             Status.Checked: "Зачтено",
             Status.CheckedSubmitted: "Зачтено. Отправлено повторно",
             Status.CheckedFailed: "Зачтено. Ошибка при повторной отправке!",
+            Status.Verified: "Защищено",
+            Status.VerifiedSubmitted: "Защищено. Отправлено повторно",
+            Status.VerifiedFailed: "Защищено. Ошибка при повторной отправке!",
             Status.Failed: "Ошибка!",
             Status.NotSubmitted: "Не отправлено",
         })
@@ -138,6 +144,9 @@ class TaskStatusDto:
             Status.Checked: "+",
             Status.CheckedSubmitted: "+",
             Status.CheckedFailed: "+",
+            Status.Verified: "✓",
+            Status.VerifiedSubmitted: "✓",
+            Status.VerifiedFailed: "✓",
             Status.Failed: "x",
             Status.NotSubmitted: "-",
         })
@@ -145,18 +154,16 @@ class TaskStatusDto:
     @property
     def color(self) -> str:
         return self.map_status({
-            Status.Submitted: "primary",
-            Status.Checked: "success",
-            Status.CheckedSubmitted: "success",
-            Status.CheckedFailed: "success",
+            Status.Submitted: "secondary",
+            Status.Checked: "warning",
+            Status.CheckedSubmitted: "warning",
+            Status.CheckedFailed: "warning",
+            Status.Verified: "success",
+            Status.VerifiedSubmitted: "success",
+            Status.VerifiedFailed: "success",
             Status.Failed: "danger",
             Status.NotSubmitted: "secondary",
         })
-
-    @property
-    def disabled(self) -> bool:
-        active = self.external.active
-        return not active or self.readonly
 
     @property
     def show_achievements(self) -> bool:
@@ -167,7 +174,29 @@ class TaskStatusDto:
             Status.Checked: True,
             Status.CheckedSubmitted: True,
             Status.CheckedFailed: True,
+            Status.Verified: True,
+            Status.VerifiedSubmitted: True,
+            Status.VerifiedFailed: True,
         })
+
+    @property
+    def can_verify(self) -> bool:
+        return self.map_status({
+            Status.Submitted: False,
+            Status.Failed: False,
+            Status.NotSubmitted: False,
+            Status.Checked: True,
+            Status.CheckedSubmitted: True,
+            Status.CheckedFailed: True,
+            Status.Verified: False,
+            Status.VerifiedSubmitted: False,
+            Status.VerifiedFailed: False,
+        })
+
+    @property
+    def disabled(self) -> bool:
+        active = self.external.active
+        return not active or self.readonly
 
     def map_achievements(self, status: TaskStatus | None, achievements: list[int]):
         dtos = []

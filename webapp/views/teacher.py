@@ -76,6 +76,13 @@ def select_submissions(teacher: Student):
     return redirect(f'/teacher/submissions/group/{gid}/variant/{vid}/task/{tid}')
 
 
+@blueprint.route("/teacher/verify/group/<int:gid>/variant/<int:vid>/task/<int:tid>", methods=["GET"])
+@authorize(db.students, lambda s: s.teacher)
+def verify(teacher: Student, gid: int, vid: int, tid: int):
+    db.statuses.verify(tid, vid, gid)
+    return redirect(f'/group/{gid}/variant/{vid}/task/{tid}')
+
+
 @blueprint.route("/teacher", methods=["GET"])
 @authorize(db.students, lambda s: s.teacher)
 def dashboard(teacher: Student):
