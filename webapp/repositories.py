@@ -192,7 +192,10 @@ class TaskStatusRepository:
         with self.db.create_session() as session:
             statuses = session.query(Group, TaskStatus) \
                 .join(TaskStatus, TaskStatus.group == Group.id) \
-                .filter((TaskStatus.status == Status.Verified) |
+                .filter((TaskStatus.status == Status.Checked) |
+                        (TaskStatus.status == Status.CheckedFailed) |
+                        (TaskStatus.status == Status.CheckedSubmitted) |
+                        (TaskStatus.status == Status.Verified) |
                         (TaskStatus.status == Status.VerifiedFailed) |
                         (TaskStatus.status == Status.VerifiedSubmitted)) \
                 .all()

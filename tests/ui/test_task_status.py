@@ -47,9 +47,9 @@ def test_task_status_html_status(db: AppDatabase, client: FlaskClient):
     c = 'd-block text-center text-decoration-none p-1 position-relative'
     for ok, text, color in [
         (False, 'x', 'background-color:#ffe3ee'),
-        (True, '+', 'background-color:#e3ffee'),
-        (False, '+', 'background-color:#e3ffee'),
-        (True, '+', 'background-color:#e3ffee'),
+        (True, '+', 'background-color:#fff9e3'),
+        (False, '+', 'background-color:#fff9e3'),
+        (True, '+', 'background-color:#fff9e3'),
     ]:
         db.statuses.check(tasks_id, variant_id, group_id, unique_str(), ok, unique_str(), unique_str())
         response = client.get(f'/group/{group_id}')
