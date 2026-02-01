@@ -97,6 +97,7 @@ class TaskStatus(Base):
     output = sa.Column("output", sa.String, nullable=True)
     status = sa.Column("status", IntEnum(Status), nullable=False)
     achievements = sa.Column("achievements", JsonArray, nullable=True)
+    reviewer = sa.Column("reviewer", sa.Integer, sa.ForeignKey("students.id"), nullable=True)
 
 
 class Message(Base):

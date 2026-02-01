@@ -231,8 +231,8 @@ class TaskStatusRepository:
                 .update(dict(achievements=None))
 
     def check(self, task: int, variant: int, group: int, code: str, ok: bool, output: str, ip: str):
-        existing = self.get_task_status(task, variant, group)
-        match (ok, existing and existing.status):
+        ts = self.get_task_status(task, variant, group)
+        match (ok, ts and ts.status):
             case (True, Status.Checked | Status.CheckedFailed | Status.CheckedSubmitted):
                 status = Status.Checked
             case (True, Status.Verified | Status.VerifiedFailed | Status.VerifiedSubmitted):
@@ -245,22 +245,23 @@ class TaskStatusRepository:
                 status = Status.VerifiedFailed
             case (False, _):
                 status = Status.Failed
-        return self.create_or_update(task, variant, group, code, status, output, ip)
+        return self.create_or_update(task, variant, group, code, status, output, ip, ts.reviewer)
 
     def submit_task(self, task: int, variant: int, group: int, code: str, ip: str) -> TaskStatus:
-        existing = self.get_task_status(task, variant, group)
-        match existing and existing.status:
+        ts = self.get_task_status(task, variant, group)
+        match ts and ts.status:
             case Status.Checked | Status.CheckedFailed | Status.CheckedSubmitted:
                 status = Status.CheckedSubmitted
             case Status.Verified | Status.VerifiedFailed | Status.VerifiedSubmitted:
                 status = Status.VerifiedSubmitted
             case _:
                 status = Status.Submitted
-        return self.create_or_update(task, variant, group, code, status, None, ip)
+        return self.create_or_update(task, variant, group, code, status, None, ip, ts.reviewer)
 
-    def verify(self, task: int, variant: int, group: int):
-        existing = self.get_task_status(task, variant, group)
-        match existing.status:
+    def verify(self, task: int, variant: int, group: int, reviewer: int):
+        ts = self.get_task_status(task, variant, group)
+        print(ts.reviewer)
+        match ts.status:
             case Status.Checked:
                 status = Status.Verified
             case Status.CheckedFailed:
@@ -268,12 +269,12 @@ class TaskStatusRepository:
             case Status.CheckedSubmitted:
                 status = Status.VerifiedSubmitted
             case _:
-                status = existing.status
-        return self.create_or_update(task, variant, group, existing.code, status, existing.output, existing.ip)
+                status = ts.status
+        return self.create_or_update(task, variant, group, ts.code, status, ts.output, ts.ip, reviewer)
 
-    def unverify(self, task: int, variant: int, group: int):
-        existing = self.get_task_status(task, variant, group)
-        match existing.status:
+    def unverify(self, task: int, variant: int, group: int, reviewer: int):
+        ts = self.get_task_status(task, variant, group)
+        match ts.status:
             case Status.Verified:
                 status = Status.Checked
             case Status.VerifiedFailed:
@@ -281,26 +282,28 @@ class TaskStatusRepository:
             case Status.VerifiedSubmitted:
                 status = Status.CheckedSubmitted
             case _:
-                status = existing.status
-        return self.create_or_update(task, variant, group, existing.code, status, existing.output, existing.ip)
+                status = ts.status
+        return self.create_or_update(task, variant, group, ts.code, status, ts.output, ts.ip, reviewer)
 
-    def create_or_update(self, task: int, variant: int, group: int, code: str, status: int, output: str, ip: str):
+    def create_or_update(self, task: int, variant: int, group: int, code: str,
+                         status: int, output: str, ip: str, reviewer: int | None):
         now = datetime.datetime.now()
         with self.db.create_session() as session:
             query = session.query(TaskStatus).filter_by(task=task, variant=variant, group=group)
             if query.count():
-                query.update(dict(code=code, status=status, output=output, ip=ip, time=now))
+                query.update(dict(code=code, status=status, output=output, ip=ip, time=now, reviewer=reviewer))
                 updated: TaskStatus = query.one()
                 return updated
             model = TaskStatus(
-                time=now,
-                task=task,
-                variant=variant,
-                group=group,
                 code=code,
                 status=status,
                 output=output,
-                ip=ip)
+                ip=ip,
+                time=now,
+                reviewer=reviewer,
+                task=task,
+                variant=variant,
+                group=group)
             session.add(model)
             return model
 
