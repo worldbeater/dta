@@ -1,6 +1,6 @@
 from flask import Config
 
-from webapp.models import FinalSeed, Group, Status, Student, Task, TaskStatus, TypeOfTask, Variant
+from webapp.models import FinalSeed, Group, Status, Student, Task, TaskStatus, TypeOfTask, Variant, TaskBlock
 
 
 class AppConfig:
@@ -43,11 +43,13 @@ class ExternalTaskDto:
 
 
 class TaskDto:
-    def __init__(self, task: Task, seed: FinalSeed | None):
+    def __init__(self, task: Task, block: TaskBlock | None, seed: FinalSeed | None):
         self.id = int(task.id)
         self.formulation = task.formulation
         self.active = task.type == TypeOfTask.Static or seed and seed.active
         self.is_random = task.type == TypeOfTask.Random
+        self.block_title = block.title if block else ''
+        self.block = block and block.id
 
 
 class AchievementDto:

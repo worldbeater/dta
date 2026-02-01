@@ -79,6 +79,13 @@ class Task(Base):
     id = sa.Column("id", sa.Integer, primary_key=True, nullable=False, autoincrement=True)
     formulation = sa.Column("formulation", sa.String, nullable=True)
     type = sa.Column("type", IntEnum(TypeOfTask), nullable=False)
+    block = sa.Column("block", sa.Integer, sa.ForeignKey("task_blocks.id"), nullable=True)
+
+
+class TaskBlock(Base):
+    __tablename__ = "task_blocks"
+    id = sa.Column("id", sa.Integer, primary_key=True, nullable=False, autoincrement=True)
+    title = sa.Column("title", sa.String, nullable=False)
 
 
 class Variant(Base):

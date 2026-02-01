@@ -80,14 +80,14 @@ def select_submissions(teacher: Student):
 @authorize(db.students, lambda s: s.teacher)
 def verify(teacher: Student, gid: int, vid: int, tid: int):
     db.statuses.verify(tid, vid, gid, teacher.id)
-    return redirect(f'/group/{gid}/variant/{vid}/task/{tid}')
+    return redirect(f'/group/{gid}')
 
 
 @blueprint.route("/teacher/unverify/group/<int:gid>/variant/<int:vid>/task/<int:tid>", methods=["GET"])
 @authorize(db.students, lambda s: s.teacher)
 def unverify(teacher: Student, gid: int, vid: int, tid: int):
     db.statuses.unverify(tid, vid, gid, teacher.id)
-    return redirect(f'/group/{gid}/variant/{vid}/task/{tid}')
+    return redirect(f'/group/{gid}')
 
 
 @blueprint.route("/teacher", methods=["GET"])

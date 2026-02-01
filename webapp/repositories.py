@@ -15,6 +15,7 @@ from webapp.models import (
     Status,
     Student,
     Task,
+    TaskBlock,
     TaskStatus,
     TypeOfTask,
     Variant,
@@ -107,10 +108,25 @@ class TaskRepository:
             tasks = session.query(Task).all()
             return tasks
 
+    def get_all_with_blocks(self) -> list[tuple[Task, TaskBlock | None]]:
+        with self.db.create_session() as session:
+            tasks = session.query(Task, TaskBlock) \
+                .outerjoin(TaskBlock, Task.block == TaskBlock.id) \
+                .all()
+            return tasks
+
     def get_by_id(self, task_id: int) -> Task:
         with self.db.create_session() as session:
-            task = session.get(Task, task_id)
+            task = session.get_one(Task, task_id)
             return task
+
+    def get_by_id_with_block(self, task_id: int) -> tuple[Task, TaskBlock | None]:
+        with self.db.create_session() as session:
+            pair = session.query(Task, TaskBlock) \
+                .outerjoin(TaskBlock, Task.block == TaskBlock.id) \
+                .filter(Task.id == task_id) \
+                .one()
+            return pair
 
     def create(self, id: int, type: TypeOfTask = TypeOfTask.Static):
         with self.db.create_session() as session:
@@ -178,7 +194,10 @@ class TaskStatusRepository:
                 .query(TaskStatus.group, TaskStatus.variant) \
                 .filter((TaskStatus.status == Status.Checked) |
                         (TaskStatus.status == Status.CheckedFailed) |
-                        (TaskStatus.status == Status.CheckedSubmitted)) \
+                        (TaskStatus.status == Status.CheckedSubmitted) |
+                        (TaskStatus.status == Status.Verified) |
+                        (TaskStatus.status == Status.VerifiedFailed) |
+                        (TaskStatus.status == Status.VerifiedSubmitted)) \
                 .group_by(TaskStatus.variant, TaskStatus.group) \
                 .having(func.count() >= tasks) \
                 .subquery()
@@ -245,7 +264,7 @@ class TaskStatusRepository:
                 status = Status.VerifiedFailed
             case (False, _):
                 status = Status.Failed
-        return self.create_or_update(task, variant, group, code, status, output, ip, ts.reviewer)
+        return self.create_or_update(task, variant, group, code, status, output, ip, ts and ts.reviewer)
 
     def submit_task(self, task: int, variant: int, group: int, code: str, ip: str) -> TaskStatus:
         ts = self.get_task_status(task, variant, group)
@@ -256,11 +275,10 @@ class TaskStatusRepository:
                 status = Status.VerifiedSubmitted
             case _:
                 status = Status.Submitted
-        return self.create_or_update(task, variant, group, code, status, None, ip, ts.reviewer)
+        return self.create_or_update(task, variant, group, code, status, None, ip, ts and ts.reviewer)
 
     def verify(self, task: int, variant: int, group: int, reviewer: int):
         ts = self.get_task_status(task, variant, group)
-        print(ts.reviewer)
         match ts.status:
             case Status.Checked:
                 status = Status.Verified

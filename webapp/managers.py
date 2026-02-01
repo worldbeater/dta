@@ -27,6 +27,7 @@ from webapp.models import (
     Status,
     Student,
     Task,
+    TaskBlock,
     TaskStatus,
     TypeOfTask,
     Variant
@@ -208,17 +209,23 @@ class StatusManager:
         group = self.groups.get_by_id(group_id)
         seed = self.seeds.get_final_seed(group.id)
         variants = self.variants.get_all()
-        tasks = self.tasks.get_all()
+        tasks = self.tasks.get_all_with_blocks()
         statuses = self.__get_statuses(group.id)
         students = self.__get_students(group.id)
         dtos: list[VariantDto] = []
-        checked = [Status.Checked, Status.CheckedFailed, Status.CheckedSubmitted]
         for var in variants:
             dto = self.__get_variant(group, var, tasks, statuses, seed, config, students)
-            if hide_pending and any(status.status not in checked for status in dto.statuses):
+            if hide_pending and any(status.status not in [
+                Status.Checked,
+                Status.CheckedFailed,
+                Status.CheckedSubmitted,
+                Status.Verified,
+                Status.VerifiedFailed,
+                Status.VerifiedSubmitted,
+            ] for status in dto.statuses):
                 continue
             dtos.append(dto)
-        return GroupDto(group, [TaskDto(task, seed) for task in tasks], dtos)
+        return GroupDto(group, [TaskDto(task, block, seed) for task, block in tasks], dtos)
 
     def __get_statuses(self, group: int) -> dict[tuple[int, int], TaskStatus]:
         statuses = self.statuses.get_by_group(group=group)
@@ -232,18 +239,18 @@ class StatusManager:
         self,
         group: Group,
         variant: Variant,
-        tasks: list[Task],
+        tasks: list[tuple[Task, TaskBlock | None]],
         statuses: dict[tuple[int, int], TaskStatus],
         seed: FinalSeed | None,
         config: AppConfig,
         students: dict[int, Student],
     ) -> VariantDto:
         dtos: list[TaskStatusDto] = []
-        for task in tasks:
+        for task, block in tasks:
             status = statuses.get((variant.id, task.id))
             e = self.external.get_external_task(group, variant, task, seed, config)
             achievements = self.__get_task_achievements(task.id)
-            dtos.append(TaskStatusDto(group, variant, TaskDto(task, seed), status, e, config, achievements))
+            dtos.append(TaskStatusDto(group, variant, TaskDto(task, block, seed), status, e, config, achievements))
         return VariantDto(variant, dtos, students.get(variant.id))
 
     def __get_task_achievements(self, task: int) -> list[int]:
@@ -258,7 +265,7 @@ class StatusManager:
         group = self.groups.get_by_id(gid)
         seed = self.seeds.get_final_seed(group.id)
         statuses = self.__get_statuses(group.id)
-        tasks = self.tasks.get_all()
+        tasks = self.tasks.get_all_with_blocks()
         students = self.__get_students(group.id)
         return self.__get_variant(group, variant, tasks, statuses, seed, config, students)
 
@@ -276,10 +283,10 @@ class StatusManager:
         config = self.config.config
         group = self.groups.get_by_id(gid)
         variant = self.variants.get_by_id(vid)
-        task = self.tasks.get_by_id(tid)
+        task, block = self.tasks.get_by_id_with_block(tid)
         seed = self.seeds.get_final_seed(gid)
         ext = self.external.get_external_task(group, variant, task, seed, self.config.config)
-        return TaskStatusDto(group, variant, TaskDto(task, seed), status, ext, config, achievements)
+        return TaskStatusDto(group, variant, TaskDto(task, block, seed), status, ext, config, achievements)
 
     def get_submissions_statuses_by_info(self, gid: int, vid: int, tid: int, skip: int, take: int):
         checks = self.checks.get_by_task(gid, vid, tid, skip, take, self.config.config.enable_registration)

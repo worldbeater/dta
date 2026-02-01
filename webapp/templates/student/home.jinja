@@ -113,6 +113,11 @@
                       {% for task in group.tasks %}
                       <td scope="col" class="text-center">
                         №{{ task.id + 1 }}
+                        {% if task.block is not none %}
+                          <small class="text-muted badge-block" title="{{ task.block_title }}">
+                            {{ task.block + 1 }}
+                          </small>
+                        {% endif %}
                       </td>
                       {% endfor %}
                     </tr>

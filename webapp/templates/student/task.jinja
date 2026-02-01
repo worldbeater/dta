@@ -92,7 +92,7 @@
     {% else %}
     <div class="form-group mb-2">
       <textarea id="code-textarea" name="code" type="text" class="form-control" {% if disabled %}disabled{%endif%} placeholder="Ответ на задание"
-        style="min-height: 250px;font-family: monospace, monospace;">{{ form.code.data if form.code.data }}</textarea>
+        style="min-height: 200px;font-family: monospace, monospace;">{{ form.code.data if form.code.data }}</textarea>
       <small class="form-text text-muted">
         <div>
           Введите ответ в поле выше. В отправляемом коде на языке программирования Python должна присутствовать функция
