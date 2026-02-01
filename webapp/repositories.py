@@ -2,7 +2,7 @@ import datetime
 import uuid
 from typing import Callable
 
-from sqlalchemy import desc, func, literal, null, text
+from sqlalchemy import desc, func, literal, null, text, exists
 from sqlalchemy.orm import Session
 
 from webapp.models import (
@@ -114,6 +114,23 @@ class TaskRepository:
                 .outerjoin(TaskBlock, Task.block == TaskBlock.id) \
                 .all()
             return tasks
+
+    def is_block_done(self, block: int, variant: int, group: int) -> bool:
+        with self.db.create_session() as session:
+            wip = session.query(Task.id) \
+                .filter(Task.block == block) \
+                .filter(~exists().where(
+                    (TaskStatus.task == Task.id) &
+                    (TaskStatus.variant == variant) &
+                    (TaskStatus.group == group) &
+                    TaskStatus.status.in_([
+                        Status.Verified,
+                        Status.VerifiedFailed,
+                        Status.VerifiedSubmitted,
+                    ])
+                )) \
+                .first()
+            return wip is None
 
     def get_blocks(self) -> list[TaskBlock]:
         with self.db.create_session() as session:

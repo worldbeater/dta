@@ -486,24 +486,16 @@ class ExportManager:
         return self.__create_csv(table, separator)
 
     def __create_points_table(self, group_id: int | None) -> list[list[str]]:
-        verified = [Status.Verified, Status.VerifiedFailed, Status.VerifiedSubmitted]
-        header = ['Адрес электронной почты']
         blocks = self.tasks.get_blocks()
-        for block in blocks:
-            header.append(block.title)
-        students = self.students.get_all() if group_id is None else \
-                   self.students.get_group_students(group_id)
-        table = [header]
+        students = self.students.get_all() if group_id is None else self.students.get_group_students(group_id)
+        table = [['Адрес электронной почты', *[block.title for block in blocks]]]
         for student in students:
             if student.variant is None or student.group is None:
                 continue
             row = [student.email]
             for block in blocks:
-                block_done = True
-                for task in self.tasks.get_all_in_block(block.id):
-                    status = self.statuses.get_task_status(task.id, student.variant, student.group)
-                    block_done &= status is not None and status.status in verified
-                row.append(int(block_done))
+                done = self.tasks.is_block_done(block.id, student.variant, student.group)
+                row.append(int(done))
             table.append(row)
         return table
 
