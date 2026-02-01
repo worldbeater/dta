@@ -455,7 +455,8 @@ class ExportManager:
         self,
         groups: GroupRepository,
         messages: MessageRepository,
-        statuses: StatusManager,
+        status_manager: StatusManager,
+        statuses: TaskStatusRepository,
         variants: VariantRepository,
         tasks: TaskRepository,
         students: StudentRepository,
@@ -463,6 +464,7 @@ class ExportManager:
     ):
         self.groups = groups
         self.messages = messages
+        self.status_manager = status_manager
         self.statuses = statuses
         self.variants = variants
         self.tasks = tasks
@@ -473,15 +475,37 @@ class ExportManager:
         messages = self.__get_latest_messages(count)
         group_titles = self.__get_group_titles()
         table = self.__create_messages_table(messages, group_titles)
-        delimiter = ";" if separator == ";" else ","
-        output = self.__create_csv(table, delimiter)
-        return output
+        return self.__create_csv(table, separator)
 
     def export_exam_results(self, group_id: int, separator: str) -> str:
         table = self.__create_exam_table(group_id)
-        delimiter = ";" if separator == "semicolon" else ","
-        output = self.__create_csv(table, delimiter)
-        return output
+        return self.__create_csv(table, separator)
+
+    def export_points(self, group_id: int | None, separator: str) -> str:
+        table = self.__create_points_table(group_id)
+        return self.__create_csv(table, separator)
+
+    def __create_points_table(self, group_id: int | None) -> list[list[str]]:
+        verified = [Status.Verified, Status.VerifiedFailed, Status.VerifiedSubmitted]
+        header = ['Адрес электронной почты']
+        blocks = self.tasks.get_blocks()
+        for block in blocks:
+            header.append(block.title)
+        students = self.students.get_all() if group_id is None else \
+                   self.students.get_group_students(group_id)
+        table = [header]
+        for student in students:
+            if student.variant is None or student.group is None:
+                continue
+            row = [student.email]
+            for block in blocks:
+                block_done = True
+                for task in self.tasks.get_all_in_block(block.id):
+                    status = self.statuses.get_task_status(task.id, student.variant, student.group)
+                    block_done &= status is not None and status.status in verified
+                row.append(int(block_done))
+            table.append(row)
+        return table
 
     def __create_messages_table(self, messages: list[Message], group_titles: dict[int, str]) -> list[list[str]]:
         rows = [["ID", "Время", "Группа", "Задача", "Вариант", "IP", "Отправитель", "Код"]]
@@ -517,11 +541,7 @@ class ExportManager:
             row = [group_title, variant.id + 1]
             score = 0
             for task in tasks:
-                info = self.statuses.get_task_status(
-                    group_id,
-                    variant.id,
-                    task.id
-                )
+                info = self.status_manager.get_task_status(group_id, variant.id, task.id)
                 status = 1 if info.status.value == 2 else 0
                 row.append(status)
                 row.append(info.external.group_title)
@@ -547,7 +567,7 @@ class ExportManager:
 
     def __create_csv(self, table: list[list[str]], delimiter: str):
         si = io.StringIO()
-        cw = csv.writer(si, delimiter=delimiter)
+        cw = csv.writer(si, delimiter=";" if delimiter == ";" else ",")
         cw.writerows(table)
         bom = u"\uFEFF"
         value = bom + si.getvalue()

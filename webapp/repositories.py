@@ -75,7 +75,7 @@ class GroupRepository:
 
     def get_by_id(self, group_id: int) -> Group:
         with self.db.create_session() as session:
-            group = session.get(Group, group_id)
+            group = session.get_one(Group, group_id)
             return group
 
     def rename(self, group_id: int, title: str, external: str):
@@ -112,6 +112,18 @@ class TaskRepository:
         with self.db.create_session() as session:
             tasks = session.query(Task, TaskBlock) \
                 .outerjoin(TaskBlock, Task.block == TaskBlock.id) \
+                .all()
+            return tasks
+
+    def get_blocks(self) -> list[TaskBlock]:
+        with self.db.create_session() as session:
+            blocks = session.query(TaskBlock).all()
+            return blocks
+
+    def get_all_in_block(self, block: int) -> list[Task]:
+        with self.db.create_session() as session:
+            tasks = session.query(Task) \
+                .filter_by(block=block) \
                 .all()
             return tasks
 
@@ -543,6 +555,10 @@ class FinalSeedRepository:
 class StudentRepository:
     def __init__(self, db: DbContextManager):
         self.db = db
+
+    def get_all(self) -> list[Student]:
+        with self.db.create_session() as session:
+            return session.query(Student).all()
 
     def get_group_students(self, group_id: int) -> list[Student]:
         with self.db.create_session() as session:
