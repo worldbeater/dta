@@ -21,6 +21,7 @@ def upgrade():
         "task_blocks",
         sa.Column("id", sa.Integer, primary_key=True, nullable=False),
         sa.Column("title", sa.String, nullable=False),
+        sa.Column("weight", sa.Integer, nullable=False),
     )
     with op.batch_alter_table('tasks') as bop:
         bop.add_column(sa.Column('block', sa.Integer, nullable=True))

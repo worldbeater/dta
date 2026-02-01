@@ -495,7 +495,7 @@ class ExportManager:
             row = [student.email]
             for block in blocks:
                 done = self.tasks.is_block_done(block.id, student.variant, student.group)
-                row.append(int(done))
+                row.append(done * block.weight)
             table.append(row)
         return table
 

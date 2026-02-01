@@ -86,6 +86,7 @@ class TaskBlock(Base):
     __tablename__ = "task_blocks"
     id = sa.Column("id", sa.Integer, primary_key=True, nullable=False, autoincrement=True)
     title = sa.Column("title", sa.String, nullable=False)
+    weight = sa.Column("weight", sa.Integer, nullable=False)
 
 
 class Variant(Base):
