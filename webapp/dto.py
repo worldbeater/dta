@@ -1,6 +1,6 @@
 from flask import Config
 
-from webapp.models import FinalSeed, Group, Status, Student, Task, TaskStatus, TypeOfTask, Variant, TaskBlock
+from webapp.models import FinalSeed, Group, Status, Student, Task, TaskBlock, TaskStatus, TypeOfTask, Variant
 
 
 class AppConfig:

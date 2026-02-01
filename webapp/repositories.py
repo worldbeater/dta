@@ -2,7 +2,7 @@ import datetime
 import uuid
 from typing import Callable
 
-from sqlalchemy import desc, func, literal, null, text, exists
+from sqlalchemy import desc, exists, func, literal, null, text
 from sqlalchemy.orm import Session
 
 from webapp.models import (
