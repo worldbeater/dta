@@ -17,6 +17,11 @@ depends_on = None
 
 
 def upgrade():
+    op.create_table(
+        "task_blocks",
+        sa.Column("id", sa.Integer, primary_key=True, nullable=False),
+        sa.Column("title", sa.String, nullable=False),
+    )
     with op.batch_alter_table('tasks') as bop:
         bop.add_column(sa.Column('block', sa.Integer, nullable=True))
         bop.create_foreign_key('fk_tasks_block', 'task_blocks', ['block'], ['id'])
@@ -26,3 +31,4 @@ def downgrade():
     with op.batch_alter_table("tasks") as bop:
         bop.drop_constraint("fk_tasks_block", type_="foreignkey")
         bop.drop_column("block")
+    op.drop_table("task_blocks")
