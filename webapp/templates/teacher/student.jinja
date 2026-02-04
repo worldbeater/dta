@@ -82,6 +82,7 @@
       </div>
     </form>
   </div>
+  {% if enable_manual_password_change %}
   <div class="col-12">
     <b class="d-block">Пароль студента</b>
     <div class="text-muted">
@@ -108,5 +109,6 @@
       </div>
     </form>
   </div>
+  {% endif %}
 </div>
 {% endblock %}

@@ -326,12 +326,15 @@ def student(teacher: Student):
         variants=variants,
         student=teacher,
         password_form=TeacherChangePasswordForm(),
+        enable_manual_password_change=config.config.enable_manual_password_change,
     )
 
 
 @blueprint.route("/teacher/student/<int:id>/password", methods=["POST"])
 @authorize(db.students, lambda s: s.teacher)
 def update_student_password(teacher: Student, id: int):
+    if not config.config.enable_manual_password_change:
+        return redirect("/teacher")
     student = db.students.get_by_id(id)
     password_form = TeacherChangePasswordForm()
     if password_form.validate_on_submit():

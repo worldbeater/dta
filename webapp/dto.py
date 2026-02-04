@@ -27,6 +27,7 @@ class AppConfig:
         self.places_in_rating: int = config["PLACES_IN_RATING"]
         self.places_in_group: int = config["PLACES_IN_GROUP"]
         self.groups: dict = config["GROUPS"]
+        self.enable_manual_password_change: bool = config["ENABLE_MANUAL_PASSWORD_CHANGE"]
 
     @property
     def registration(self) -> bool:
