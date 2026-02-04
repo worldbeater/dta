@@ -359,22 +359,15 @@ def update_student_password(teacher: Student, id: int):
     )
 
 
-@blueprint.route("/teacher/student/<int:id>/group", methods=["POST"])
+@blueprint.route("/teacher/student/<int:id>/info", methods=["POST"])
 @authorize(db.students, lambda s: s.teacher)
-def update_student_group(teacher: Student, id: int):
+def update_student(teacher: Student, id: int):
     student = db.students.get_by_id(id)
     gid = request.form["group"]
-    group = db.groups.get_by_id(gid).id if gid.strip() else None
-    db.students.update_group(student.id, group)
-    return redirect(url_for("teacher.student", email=student.email))
-
-
-@blueprint.route("/teacher/student/<int:id>/variant", methods=["POST"])
-@authorize(db.students, lambda s: s.teacher)
-def update_student_variant(teacher: Student, id: int):
-    student = db.students.get_by_id(id)
     vid = request.form["variant"]
+    group = db.groups.get_by_id(gid).id if gid.strip() else None
     variant = db.variants.get_by_id(vid).id if vid.strip() else None
+    db.students.update_group(student.id, group)
     db.students.update_variant(student.id, variant)
     return redirect(url_for("teacher.student", email=student.email))
 

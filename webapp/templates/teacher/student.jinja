@@ -29,14 +29,11 @@
     </h6>
   </div>
   <div class="col-12">
-    <b class="d-block">Группа студента</b>
-    <div class="text-muted">
-      Если установить значение "Не выбрана", студенту будет предложено выбрать группу самостоятельно.
-    </div>
-    <form action="/teacher/student/{{ user.id }}/group" method="POST" class="w-100">
+    <form action="/teacher/student/{{ user.id }}/info" method="POST" class="w-100">
       <div class="row">
-        <div class="col-md-8 mb-2">
-          <select name="group" class="form-select mb-2">
+        <div class="col-md-6 mb-1">
+          <b class="d-block mb-1">Группа</b>
+          <select name="group" class="form-select">
             <option value="" {{ "selected='selected'" if group is none else "" }}>
               Не выбрана
             </option>
@@ -47,23 +44,9 @@
             {% endfor %}
           </select>
         </div>
-        <div class="col-md-4 mb-2">
-          <button type="submit" class="btn btn-outline-primary w-100 d-block mb-2">
-            Сохранить группу
-          </button>
-        </div>
-      </div>
-    </form>
-  </div>
-  <div class="col-12">
-    <b class="d-block">Вариант студента</b>
-    <div class="text-muted">
-      Если установить значение "Не выбран", студенту будет назначен первый незанятый вариант при выборе группы.
-    </div>
-    <form action="/teacher/student/{{ user.id }}/variant" method="POST" class="w-100">
-      <div class="row">
-        <div class="col-md-8 mb-2">
-          <select name="variant" class="form-select mb-2">
+        <div class="col-md-6 mb-1">
+          <b class="d-block mb-1">Вариант</b>
+          <select name="variant" class="form-select">
             <option value="" {{ "selected='selected'" if variant is none else "" }}>
               Не выбран
             </option>
@@ -74,9 +57,12 @@
             {% endfor %}
           </select>
         </div>
-        <div class="col-md-4 mb-2">
+        <div class="col-md-12">
+          <div class="text-muted mb-2">
+            Если установить значение "Не выбрано", студенту будет предложено выбрать группу или вариант самостоятельно.
+          </div>
           <button type="submit" class="btn btn-outline-primary w-100 d-block mb-2">
-            Сохранить вариант
+            Сохранить группу и вариант
           </button>
         </div>
       </div>

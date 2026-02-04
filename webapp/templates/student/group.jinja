@@ -117,7 +117,7 @@
         {% for variant in group.variants %}
         <tr>
           <td scope="col" style="border-bottom: 0; width:100px; padding: 0">
-            <span class="p-1 d-block {{ 'fw-bold text-decoration-underline' if student and student.variant == variant.id else '' }}"
+            <span class="p-1 d-block {{ 'fw-bold' if student and student.variant == variant.id else '' }}"
                   title="{{ variant.earned }}">
               {{ variant.id + 1 }}
             </span>
@@ -125,7 +125,11 @@
           {% if student.teacher %}
           <td scope="col" style="border-bottom: 0; width:100px; padding: 0">
             <span class="p-1 d-block" title="{{ variant.email }}">
+              {% if variant.email %}
               {{ variant.email }}
+              {% else %}
+              <span class="text-muted">Не выбран</span>
+              {% endif %}
             </span>
           </td>
           {% endif %}
