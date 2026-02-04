@@ -1,6 +1,6 @@
 from flask import Config
 
-from webapp.models import FinalSeed, Group, Status, Student, Task, TaskStatus, TypeOfTask, Variant
+from webapp.models import FinalSeed, Group, Status, Student, Task, TaskBlock, TaskStatus, TypeOfTask, Variant
 
 
 class AppConfig:
@@ -43,11 +43,13 @@ class ExternalTaskDto:
 
 
 class TaskDto:
-    def __init__(self, task: Task, seed: FinalSeed | None):
+    def __init__(self, task: Task, block: TaskBlock | None, seed: FinalSeed | None):
         self.id = int(task.id)
         self.formulation = task.formulation
         self.active = task.type == TypeOfTask.Static or seed and seed.active
         self.is_random = task.type == TypeOfTask.Random
+        self.block_title = block.title if block else ''
+        self.block = block and block.id
 
 
 class AchievementDto:
@@ -113,9 +115,12 @@ class TaskStatusDto:
     def cell_background(self) -> str:
         return self.map_status({
             Status.Submitted: "inherit",
-            Status.Checked: "#e3ffee",
-            Status.CheckedSubmitted: "#e3ffee",
-            Status.CheckedFailed: "#e3ffee",
+            Status.Checked: "#fff9e3",
+            Status.CheckedSubmitted: "#fff9e3",
+            Status.CheckedFailed: "#fff9e3",
+            Status.Verified: "#e3ffee",
+            Status.VerifiedSubmitted: "#e3ffee",
+            Status.VerifiedFailed: "#e3ffee",
             Status.Failed: "#ffe3ee",
             Status.NotSubmitted: "inherit",
         })
@@ -127,6 +132,9 @@ class TaskStatusDto:
             Status.Checked: "Зачтено",
             Status.CheckedSubmitted: "Зачтено. Отправлено повторно",
             Status.CheckedFailed: "Зачтено. Ошибка при повторной отправке!",
+            Status.Verified: "Защищено",
+            Status.VerifiedSubmitted: "Защищено. Отправлено повторно",
+            Status.VerifiedFailed: "Защищено. Ошибка при повторной отправке!",
             Status.Failed: "Ошибка!",
             Status.NotSubmitted: "Не отправлено",
         })
@@ -138,6 +146,9 @@ class TaskStatusDto:
             Status.Checked: "+",
             Status.CheckedSubmitted: "+",
             Status.CheckedFailed: "+",
+            Status.Verified: "✓",
+            Status.VerifiedSubmitted: "✓",
+            Status.VerifiedFailed: "✓",
             Status.Failed: "x",
             Status.NotSubmitted: "-",
         })
@@ -145,29 +156,48 @@ class TaskStatusDto:
     @property
     def color(self) -> str:
         return self.map_status({
-            Status.Submitted: "primary",
-            Status.Checked: "success",
-            Status.CheckedSubmitted: "success",
-            Status.CheckedFailed: "success",
+            Status.Submitted: "secondary",
+            Status.Checked: "warning",
+            Status.CheckedSubmitted: "warning",
+            Status.CheckedFailed: "warning",
+            Status.Verified: "success",
+            Status.VerifiedSubmitted: "success",
+            Status.VerifiedFailed: "success",
             Status.Failed: "danger",
             Status.NotSubmitted: "secondary",
         })
 
     @property
+    def show_achievements(self) -> bool:
+        return self.achievements and self.status in [
+            Status.Checked,
+            Status.CheckedSubmitted,
+            Status.CheckedFailed,
+            Status.Verified,
+            Status.VerifiedSubmitted,
+            Status.VerifiedFailed,
+        ]
+
+    @property
+    def can_verify(self) -> bool:
+        return self.status in [
+            Status.Checked,
+            Status.CheckedSubmitted,
+            Status.CheckedFailed,
+        ]
+
+    @property
+    def can_unverify(self) -> bool:
+        return self.status in [
+            Status.Verified,
+            Status.VerifiedSubmitted,
+            Status.VerifiedFailed,
+        ]
+
+    @property
     def disabled(self) -> bool:
         active = self.external.active
         return not active or self.readonly
-
-    @property
-    def show_achievements(self) -> bool:
-        return self.achievements and self.map_status({
-            Status.Submitted: False,
-            Status.Failed: False,
-            Status.NotSubmitted: False,
-            Status.Checked: True,
-            Status.CheckedSubmitted: True,
-            Status.CheckedFailed: True,
-        })
 
     def map_achievements(self, status: TaskStatus | None, achievements: list[int]):
         dtos = []
@@ -182,8 +212,9 @@ class TaskStatusDto:
 
 
 class VariantDto:
-    def __init__(self, variant: Variant, statuses: list[TaskStatusDto]):
+    def __init__(self, variant: Variant, statuses: list[TaskStatusDto], student: Student | None):
         self.id = int(variant.id)
+        self.email = student.email if student else ''
         self.statuses = statuses
         self.earned = sum(s.earned for s in statuses if s.earned > 1)
         self.solved = sum(s.status in [

@@ -15,9 +15,9 @@ def test_export(db: AppDatabase):
     c = AppConfigManager(lambda: dict())
     ach = AchievementManager(c)
     ext = ExternalTaskManager(db.groups, db.tasks)
-    s = StatusManager(db.tasks, db.groups, db.variants, db.statuses, c, db.seeds, db.checks, ach, ext)
+    s = StatusManager(db.tasks, db.groups, db.variants, db.statuses, c, db.seeds, db.checks, ach, ext, db.students)
     m = StudentManager(c, db.students, db.mailers)
-    e = ExportManager(db.groups, db.messages, s, db.variants, db.tasks, db.students, m)
+    e = ExportManager(db.groups, db.messages, s, db.statuses, db.variants, db.tasks, db.students, m)
     (group, variant, task) = arrange_task(db)
 
     code = "main = lambda x: x**42"

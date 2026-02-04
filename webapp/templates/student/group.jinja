@@ -70,9 +70,13 @@
 <div class="alert alert-primary" role="alert">
 <b>Внимание!</b> После выбора группы изменить Ваш выбор сможет только преподаватель.
 </div>
+{% if selectable %}
 <a class="btn btn-outline-primary w-100 d-block" href="/group/select/{{ group.id }}">
   Подтвердить выбор группы
 </a>
+{% else %}
+❗ В настоящий момент все варианты группы заняты. Свяжитесь с преподавателем для переопределения настроек.
+{% endif %}
 {% else %}
 <h6 class="card-subtitle mb-3 text-muted">
   Нажмите на соответствующую Вашему варианту ячейку, чтобы перейти к задаче.
@@ -94,9 +98,17 @@
       <thead>
         <tr>
           <th scope="col" style="width:100px">Вариант</th>
+          {% if student.teacher %}
+          <th scope="col" style="width:100px">Почта</th>
+          {% endif %}
           {% for task in group.tasks %}
           <td scope="col" class="text-center {{ 'fw-bold' if task.is_random }}">
             №{{ task.id + 1 }}
+            {% if task.block is not none %}
+              <small class="text-muted badge-block" title="{{ task.block_title }}">
+                {{ task.block + 1 }}
+              </small>
+            {% endif %}
           </td>
           {% endfor %}
         </tr>
@@ -105,10 +117,18 @@
         {% for variant in group.variants %}
         <tr>
           <td scope="col" style="border-bottom: 0; width:100px; padding: 0">
-            <span class="p-1 d-block" title="{{ variant.earned }}">
+            <span class="p-1 d-block {{ 'fw-bold text-decoration-underline' if student and student.variant == variant.id else '' }}"
+                  title="{{ variant.earned }}">
               {{ variant.id + 1 }}
             </span>
           </td>
+          {% if student.teacher %}
+          <td scope="col" style="border-bottom: 0; width:100px; padding: 0">
+            <span class="p-1 d-block" title="{{ variant.email }}">
+              {{ variant.email }}
+            </span>
+          </td>
+          {% endif %}
           {% for status in variant.statuses %}
           <td scope="col" style="border-bottom: 0; padding: 0">
             <a class="d-block text-center text-decoration-none p-1 position-relative"

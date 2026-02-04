@@ -67,7 +67,7 @@
   </h6>
   {% if status.achievements %}
   {% for dto in status.achievements %}
-  <div class="callout callout-{{ 'success' if dto.active else 'default text-muted' }}">
+  <div class="callout callout-{{ status.color if dto.active else 'default text-muted' }}">
     <div>{{ dto.title }} {{ '✓' if dto.active else '' }}</div>
     <small>{{ dto.description }}</small>
   </div>
@@ -91,9 +91,8 @@
     </div>
     {% else %}
     <div class="form-group mb-2">
-      <textarea id="code-textarea" name="code" type="text" class="form-control" {% if status.disabled or registration
-        and not student %}disabled{%endif%} placeholder="Ответ на задание"
-        style="min-height: 250px;font-family: monospace, monospace;">{{ form.code.data if form.code.data }}</textarea>
+      <textarea id="code-textarea" name="code" type="text" class="form-control" {% if disabled %}disabled{%endif%} placeholder="Ответ на задание"
+        style="min-height: 200px;font-family: monospace, monospace;">{{ form.code.data if form.code.data }}</textarea>
       <small class="form-text text-muted">
         <div>
           Введите ответ в поле выше. В отправляемом коде на языке программирования Python должна присутствовать функция
@@ -112,10 +111,9 @@
     {% endif %}
     {{ form.csrf_token }}
     <div class="row">
-      <div class="col-md-8">
-        <button type="submit" class="btn btn-primary w-100 d-block" {% if status.disabled or registration and not
-          student %}disabled{%endif%}>
-          Отправить решение на проверку
+      <div class="col-md-4">
+        <button type="submit" class="btn btn-primary w-100 d-block" {% if disabled %}disabled{%endif%}>
+          Отправить код на проверку
         </button>
       </div>
       {% if student and student.teacher %}
@@ -125,13 +123,29 @@
           История решений 📕
         </a>
       </div>
+      {% if status.can_verify %}
+      <div class="col-md-4">
+        <a class="btn btn-outline-success w-100 d-block"
+           href="/teacher/verify/group/{{ status.group }}/variant/{{ status.variant }}/task/{{ status.task }}">
+          Задача защищена ✅
+        </a>
+      </div>
+      {% endif %}
+      {% if status.can_unverify %}
+      <div class="col-md-4">
+        <a class="btn btn-outline-danger w-100 d-block"
+           href="/teacher/unverify/group/{{ status.group }}/variant/{{ status.variant }}/task/{{ status.task }}">
+          Задача не защищена ❌
+        </a>
+      </div>
+      {% endif %}
       {% endif %}
     </div>
     {% endif %}
   </form>
 </div>
 
-{% if highlight and not (status.disabled or registration and not student) %}
+{% if highlight and not disabled %}
 <script src="{{ url_for('static', filename='js/codemirror.min.js') }}"></script>
 <script src="{{ url_for('static', filename='js/python.min.js') }}"></script>
 <script type="text/javascript">

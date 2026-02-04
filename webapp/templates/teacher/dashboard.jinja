@@ -94,7 +94,7 @@
   </div>
   {% endif %}
   <div class="col-12 mb-3">
-    <b class="card-title d-block">Выгрузка всех присланных сообщений</b>
+    <b class="card-title d-block">Выгрузка последних присланных сообщений</b>
     <form action="/teacher/messages" method="GET" class="w-100">
       <select class="form-select mb-2" name="separator">
         <option value=";">Точка с запятой</option>
@@ -116,7 +116,7 @@
     <form action="/teacher/submissions" method="GET" class="w-100">
       <select class="form-select mb-2" name="gid">
         {% for g in glist %}
-        <option value="{{ g.id }}">Группа {{ g.title }}</option>
+        <option value="{{ g.id }}">{{ g.title }}</option>
         {% endfor %}
       </select>
       <select class="form-select mb-2" name="vid">
@@ -139,7 +139,7 @@
     <form action="/teacher/student" method="GET" class="w-100">
       <div class="row">
         <div class="col-md-8">
-          <input class="form-control" type="email" name="email" placeholder="Email пользователя" />
+          <input class="form-control" name="email" placeholder="Email пользователя" />
         </div>
         <div class="col-md-4">
           <button type="submit" class="btn btn-outline-primary w-100 d-block">
@@ -147,6 +147,22 @@
           </button>
         </div>
       </div>
+    </form>
+  </div>
+  <div class="col-12 mb-3">
+    <b class="card-title d-block">Выгрузка таблицы с оценками для СДО</b>
+    <form action="/teacher/points" method="GET" class="w-100">
+      <select class="form-select mb-2" name="group">
+        {% for group in groups %}
+        <option value="{{ group.id }}">
+          {{ group.title }}
+        </option>
+        {% endfor %}
+        <option value="all">Все группы</option>
+      </select>
+      <button type="submit" class="btn btn-outline-primary w-100 d-block">
+        Выгрузить таблицу
+      </button>
     </form>
   </div>
 </div>

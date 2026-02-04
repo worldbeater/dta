@@ -34,7 +34,8 @@ db = AppDatabase(lambda: config.config.connection_string)
 
 ach = AchievementManager(config)
 ext = ExternalTaskManager(db.groups, db.tasks)
-statuses = StatusManager(db.tasks, db.groups, db.variants, db.statuses, config, db.seeds, db.checks, ach, ext)
+statuses = StatusManager(db.tasks, db.groups, db.variants, db.statuses, config,
+                         db.seeds, db.checks, ach, ext, db.students)
 
 groups = GroupManager(db.groups, db.seeds, ext)
 students = StudentManager(config, db.students, db.mailers)
@@ -53,7 +54,7 @@ def set_anonymous_identifier(response: Response) -> Response:
 @authorize(db.students)
 def dashboard(student: Student | None):
     if config.config.registration and student and student.group is not None:
-        if student.variant is not None or db.variants.get_student_variants(student.id, student.group):
+        if student.variant is not None:
             return redirect("/home")
         return redirect(f"/group/{student.group}")
     groupings = groups.get_groupings()
@@ -112,17 +113,10 @@ def submissions(student: Student | None, page: int):
 @blueprint.route("/home", methods=["GET"])
 @authorize(db.students, lambda _: True)
 def home(student: Student):
-    if student.group is None:
+    if student.group is None or student.variant is None:
         return redirect("/")
-    variants = db.variants.get_student_variants(student.id, student.group)
-    if student.variant is not None and not any(v == student.variant for v, _ in variants):
-        variants.insert(0, (student.variant, 0))
-    if not variants:
-        return redirect(f"/group/{student.group}")
-    if student.variant is None:
-        student.variant = variants[0][0]
+    variant = statuses.get_variant_statuses(student.group, student.variant)
     group = statuses.get_group_statuses(student.group, False)
-    variant = next(filter(lambda v: v.id == student.variant, group.variants), None)
     return render_template(
         "student/home.jinja",
         student=student,
@@ -132,19 +126,9 @@ def home(student: Student):
         exam=ext.is_exam_active(),
         group=group,
         variant=variant,
-        variants=variants,
         group_place=home_manager.get_group_place(student.group),
         student_place=home_manager.get_student_place(student.group, student.variant),
     )
-
-
-@blueprint.route("/home/variant_select", methods=["POST"])
-@authorize(db.students, lambda _: True)
-def variant_select(student: Student):
-    vid = request.form.get("variant", type=int)
-    variant = db.variants.get_by_id(vid)
-    db.students.update_variant(student.id, variant.id)
-    return redirect(f"/home")
 
 
 @blueprint.route("/group/<int:gid>", methods=["GET"])
@@ -154,6 +138,8 @@ def group(student: Student | None, gid: int):
         return redirect("/login")
     if student and student.group is not None and student.group != gid:
         return redirect("/")
+    variants = max(v.id for v in db.variants.get_all())
+    selectable = db.students.get_free_variant(gid) <= variants
     exam = ext.is_exam_active()
     hide_pending = exam and request.args.get('hide_pending', False)
     group = statuses.get_group_statuses(gid, hide_pending)
@@ -168,14 +154,18 @@ def group(student: Student | None, gid: int):
         group_rating=config.config.groups,
         student=student,
         exam=exam,
+        selectable=selectable,
     )
 
 
 @blueprint.route("/group/select/<int:gid>", methods=["GET"])
 @authorize(db.students, lambda _: True)
 def group_select(student: Student, gid: int):
-    if student.group is None:
+    variants = max(v.id for v in db.variants.get_all())
+    if student.group is None and db.students.get_free_variant(gid) <= variants:
         db.students.update_group(student.id, gid)
+        vid = db.students.get_free_variant(gid)
+        db.students.update_variant(student.id, vid)
     return redirect(f"/group/{gid}")
 
 
@@ -215,6 +205,8 @@ def task(student: Student | None, gid: int, vid: int, tid: int):
     if student and not student.teacher and student.group != gid:
         return redirect("/")
     status = statuses.get_task_status(gid, vid, tid)
+    foreign = student.group != gid or student.variant != vid
+    disabled = status.disabled or config.config.registration and foreign
     form = StudentMessageForm()
     return render_template(
         "student/task.jinja",
@@ -225,6 +217,7 @@ def task(student: Student | None, gid: int, vid: int, tid: int):
         status=status,
         form=form,
         student=student,
+        disabled=disabled,
     )
 
 
@@ -235,11 +228,12 @@ def submit_task(student: Student | None, gid: int, vid: int, tid: int):
         return redirect("/login")
     if student and not student.teacher and student.group != gid:
         return redirect("/")
-    form = StudentMessageForm()
-    valid = form.validate_on_submit()
     status = statuses.get_task_status(gid, vid, tid)
+    foreign = student.group != gid or student.variant != vid
+    disabled = status.disabled or config.config.registration and foreign
+    form = StudentMessageForm()
     ip = get_real_ip(request)
-    if valid and not status.disabled and db.ips.is_allowed(ip):
+    if form.validate_on_submit() and not disabled and db.ips.is_allowed(ip):
         sid = student.id if student else None
         session_id = request.cookies.get("anonymous_identifier")
         db.messages.submit_task(tid, vid, gid, form.code.data, ip, sid, session_id)

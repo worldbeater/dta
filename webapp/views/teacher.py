@@ -28,8 +28,9 @@ db = AppDatabase(lambda: config.config.connection_string)
 ext = ExternalTaskManager(db.groups, db.tasks)
 students = StudentManager(config, db.students, db.mailers)
 ach = AchievementManager(config)
-statuses = StatusManager(db.tasks, db.groups, db.variants, db.statuses, config, db.seeds, db.checks, ach, ext)
-exports = ExportManager(db.groups, db.messages, statuses, db.variants, db.tasks, db.students, students)
+statuses = StatusManager(db.tasks, db.groups, db.variants, db.statuses, config,
+                         db.seeds, db.checks, ach, ext, db.students)
+exports = ExportManager(db.groups, db.messages, statuses, db.statuses, db.variants, db.tasks, db.students, students)
 
 
 @blueprint.route("/teacher/submissions/group/<int:gid>/variant/<int:vid>/task/<int:tid>",
@@ -75,10 +76,24 @@ def select_submissions(teacher: Student):
     return redirect(f'/teacher/submissions/group/{gid}/variant/{vid}/task/{tid}')
 
 
+@blueprint.route("/teacher/verify/group/<int:gid>/variant/<int:vid>/task/<int:tid>", methods=["GET"])
+@authorize(db.students, lambda s: s.teacher)
+def verify(teacher: Student, gid: int, vid: int, tid: int):
+    db.statuses.verify(tid, vid, gid, teacher.id)
+    return redirect(f'/group/{gid}')
+
+
+@blueprint.route("/teacher/unverify/group/<int:gid>/variant/<int:vid>/task/<int:tid>", methods=["GET"])
+@authorize(db.students, lambda s: s.teacher)
+def unverify(teacher: Student, gid: int, vid: int, tid: int):
+    db.statuses.unverify(tid, vid, gid, teacher.id)
+    return redirect(f'/group/{gid}')
+
+
 @blueprint.route("/teacher", methods=["GET"])
 @authorize(db.students, lambda s: s.teacher)
 def dashboard(teacher: Student):
-    groups = db.groups.get_all() if config.config.no_background_worker or config.config.final_tasks else None
+    groups = db.groups.get_all()
     glist = db.groups.get_all()
     vlist = db.variants.get_all()
     tlist = db.tasks.get_all()
@@ -214,12 +229,24 @@ def exam_csv(teacher: Student, group_id: int):
 
 @blueprint.route("/teacher/messages", methods=["GET"])
 @authorize(db.students, lambda s: s.teacher)
-def messages(teacher: Student):
+def messages_csv(teacher: Student):
     separator = request.args.get('separator')
     count = request.args.get('count')
     value = exports.export_messages(count, separator)
     output = make_response(value)
     output.headers["Content-Disposition"] = "attachment; filename=messages.csv"
+    output.headers["Content-type"] = "text/csv"
+    return output
+
+
+@blueprint.route("/teacher/points", methods=["GET"])
+@authorize(db.students, lambda s: s.teacher)
+def points_csv(teacher: Student):
+    separator = request.args.get('separator')
+    group_id = request.args.get('group', None, type=int)
+    value = exports.export_points(group_id, separator)
+    output = make_response(value)
+    output.headers["Content-Disposition"] = "attachment; filename=points.csv"
     output.headers["Content-type"] = "text/csv"
     return output
 

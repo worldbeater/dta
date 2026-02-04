@@ -47,6 +47,9 @@ class Status(enum.IntEnum):
     NotSubmitted = 4
     CheckedSubmitted = 5
     CheckedFailed = 6
+    Verified = 7
+    VerifiedSubmitted = 8
+    VerifiedFailed = 9
 
 
 class TypeOfTask(enum.IntEnum):
@@ -76,6 +79,14 @@ class Task(Base):
     id = sa.Column("id", sa.Integer, primary_key=True, nullable=False, autoincrement=True)
     formulation = sa.Column("formulation", sa.String, nullable=True)
     type = sa.Column("type", IntEnum(TypeOfTask), nullable=False)
+    block = sa.Column("block", sa.Integer, sa.ForeignKey("task_blocks.id"), nullable=True)
+
+
+class TaskBlock(Base):
+    __tablename__ = "task_blocks"
+    id = sa.Column("id", sa.Integer, primary_key=True, nullable=False, autoincrement=True)
+    title = sa.Column("title", sa.String, nullable=False)
+    weight = sa.Column("weight", sa.Integer, nullable=False)
 
 
 class Variant(Base):
@@ -94,6 +105,7 @@ class TaskStatus(Base):
     output = sa.Column("output", sa.String, nullable=True)
     status = sa.Column("status", IntEnum(Status), nullable=False)
     achievements = sa.Column("achievements", JsonArray, nullable=True)
+    reviewer = sa.Column("reviewer", sa.Integer, sa.ForeignKey("students.id"), nullable=True)
 
 
 class Message(Base):

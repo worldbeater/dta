@@ -2,7 +2,7 @@ import datetime
 import uuid
 from typing import Callable
 
-from sqlalchemy import desc, func, literal, null, text
+from sqlalchemy import desc, exists, func, literal, null, text
 from sqlalchemy.orm import Session
 
 from webapp.models import (
@@ -15,6 +15,7 @@ from webapp.models import (
     Status,
     Student,
     Task,
+    TaskBlock,
     TaskStatus,
     TypeOfTask,
     Variant,
@@ -74,7 +75,7 @@ class GroupRepository:
 
     def get_by_id(self, group_id: int) -> Group:
         with self.db.create_session() as session:
-            group = session.get(Group, group_id)
+            group = session.get_one(Group, group_id)
             return group
 
     def rename(self, group_id: int, title: str, external: str):
@@ -107,10 +108,54 @@ class TaskRepository:
             tasks = session.query(Task).all()
             return tasks
 
+    def get_all_with_blocks(self) -> list[tuple[Task, TaskBlock | None]]:
+        with self.db.create_session() as session:
+            tasks = session.query(Task, TaskBlock) \
+                .outerjoin(TaskBlock, Task.block == TaskBlock.id) \
+                .all()
+            return tasks
+
+    def is_block_done(self, block: int, variant: int, group: int) -> bool:
+        with self.db.create_session() as session:
+            wip = session.query(Task.id) \
+                .filter(Task.block == block) \
+                .filter(~exists().where(
+                    (TaskStatus.task == Task.id) &
+                    (TaskStatus.variant == variant) &
+                    (TaskStatus.group == group) &
+                    TaskStatus.status.in_([
+                        Status.Verified,
+                        Status.VerifiedFailed,
+                        Status.VerifiedSubmitted,
+                    ])
+                )) \
+                .first()
+            return wip is None
+
+    def get_blocks(self) -> list[TaskBlock]:
+        with self.db.create_session() as session:
+            blocks = session.query(TaskBlock).all()
+            return blocks
+
+    def get_all_in_block(self, block: int) -> list[Task]:
+        with self.db.create_session() as session:
+            tasks = session.query(Task) \
+                .filter_by(block=block) \
+                .all()
+            return tasks
+
     def get_by_id(self, task_id: int) -> Task:
         with self.db.create_session() as session:
-            task = session.get(Task, task_id)
+            task = session.get_one(Task, task_id)
             return task
+
+    def get_by_id_with_block(self, task_id: int) -> tuple[Task, TaskBlock | None]:
+        with self.db.create_session() as session:
+            pair = session.query(Task, TaskBlock) \
+                .outerjoin(TaskBlock, Task.block == TaskBlock.id) \
+                .filter(Task.id == task_id) \
+                .one()
+            return pair
 
     def create(self, id: int, type: TypeOfTask = TypeOfTask.Static):
         with self.db.create_session() as session:
@@ -178,7 +223,10 @@ class TaskStatusRepository:
                 .query(TaskStatus.group, TaskStatus.variant) \
                 .filter((TaskStatus.status == Status.Checked) |
                         (TaskStatus.status == Status.CheckedFailed) |
-                        (TaskStatus.status == Status.CheckedSubmitted)) \
+                        (TaskStatus.status == Status.CheckedSubmitted) |
+                        (TaskStatus.status == Status.Verified) |
+                        (TaskStatus.status == Status.VerifiedFailed) |
+                        (TaskStatus.status == Status.VerifiedSubmitted)) \
                 .group_by(TaskStatus.variant, TaskStatus.group) \
                 .having(func.count() >= tasks) \
                 .subquery()
@@ -194,7 +242,10 @@ class TaskStatusRepository:
                 .join(TaskStatus, TaskStatus.group == Group.id) \
                 .filter((TaskStatus.status == Status.Checked) |
                         (TaskStatus.status == Status.CheckedFailed) |
-                        (TaskStatus.status == Status.CheckedSubmitted)) \
+                        (TaskStatus.status == Status.CheckedSubmitted) |
+                        (TaskStatus.status == Status.Verified) |
+                        (TaskStatus.status == Status.VerifiedFailed) |
+                        (TaskStatus.status == Status.VerifiedSubmitted)) \
                 .all()
             return statuses
 
@@ -228,37 +279,78 @@ class TaskStatusRepository:
                 .update(dict(achievements=None))
 
     def check(self, task: int, variant: int, group: int, code: str, ok: bool, output: str, ip: str):
-        def status():
-            existing = self.get_task_status(task, variant, group)
-            if existing and existing.status in [Status.Checked, Status.CheckedFailed, Status.CheckedSubmitted]:
-                return Status.Checked if ok else Status.CheckedFailed
-            return Status.Checked if ok else Status.Failed
-
-        return self.create_or_update(task, variant, group, code, status(), output, ip)
+        ts = self.get_task_status(task, variant, group)
+        match (ok, ts and ts.status):
+            case (True, Status.Checked | Status.CheckedFailed | Status.CheckedSubmitted):
+                status = Status.Checked
+            case (True, Status.Verified | Status.VerifiedFailed | Status.VerifiedSubmitted):
+                status = Status.Verified
+            case (True, _):
+                status = Status.Checked
+            case (False, Status.Checked | Status.CheckedFailed | Status.CheckedSubmitted):
+                status = Status.CheckedFailed
+            case (False, Status.Verified | Status.VerifiedFailed | Status.VerifiedSubmitted):
+                status = Status.VerifiedFailed
+            case (False, _):
+                status = Status.Failed
+        return self.create_or_update(task, variant, group, code, status, output, ip, ts and ts.reviewer)
 
     def submit_task(self, task: int, variant: int, group: int, code: str, ip: str) -> TaskStatus:
-        checked = [Status.Checked, Status.CheckedFailed, Status.CheckedSubmitted]
-        existing = self.get_task_status(task, variant, group)
-        status = Status.CheckedSubmitted if existing and existing.status in checked else Status.Submitted
-        return self.create_or_update(task, variant, group, code, status, None, ip)
+        ts = self.get_task_status(task, variant, group)
+        match ts and ts.status:
+            case Status.Checked | Status.CheckedFailed | Status.CheckedSubmitted:
+                status = Status.CheckedSubmitted
+            case Status.Verified | Status.VerifiedFailed | Status.VerifiedSubmitted:
+                status = Status.VerifiedSubmitted
+            case _:
+                status = Status.Submitted
+        return self.create_or_update(task, variant, group, code, status, None, ip, ts and ts.reviewer)
 
-    def create_or_update(self, task: int, variant: int, group: int, code: str, status: int, output: str, ip: str):
+    def verify(self, task: int, variant: int, group: int, reviewer: int):
+        ts = self.get_task_status(task, variant, group)
+        match ts.status:
+            case Status.Checked:
+                status = Status.Verified
+            case Status.CheckedFailed:
+                status = Status.VerifiedFailed
+            case Status.CheckedSubmitted:
+                status = Status.VerifiedSubmitted
+            case _:
+                status = ts.status
+        return self.create_or_update(task, variant, group, ts.code, status, ts.output, ts.ip, reviewer)
+
+    def unverify(self, task: int, variant: int, group: int, reviewer: int):
+        ts = self.get_task_status(task, variant, group)
+        match ts.status:
+            case Status.Verified:
+                status = Status.Checked
+            case Status.VerifiedFailed:
+                status = Status.CheckedFailed
+            case Status.VerifiedSubmitted:
+                status = Status.CheckedSubmitted
+            case _:
+                status = ts.status
+        return self.create_or_update(task, variant, group, ts.code, status, ts.output, ts.ip, reviewer)
+
+    def create_or_update(self, task: int, variant: int, group: int, code: str,
+                         status: int, output: str, ip: str, reviewer: int | None):
         now = datetime.datetime.now()
         with self.db.create_session() as session:
             query = session.query(TaskStatus).filter_by(task=task, variant=variant, group=group)
             if query.count():
-                query.update(dict(code=code, status=status, output=output, ip=ip, time=now))
+                query.update(dict(code=code, status=status, output=output, ip=ip, time=now, reviewer=reviewer))
                 updated: TaskStatus = query.one()
                 return updated
             model = TaskStatus(
-                time=now,
-                task=task,
-                variant=variant,
-                group=group,
                 code=code,
                 status=status,
                 output=output,
-                ip=ip)
+                ip=ip,
+                time=now,
+                reviewer=reviewer,
+                task=task,
+                variant=variant,
+                group=group)
             session.add(model)
             return model
 
@@ -357,7 +449,7 @@ class MessageCheckRepository:
     def checked(self) -> list[MessageCheck]:
         with self.db.create_session() as session:
             return session.query(MessageCheck) \
-                .filter_by(status=Status.Checked) \
+                .filter(MessageCheck.status.in_([Status.Checked, Status.Verified])) \
                 .all()
 
     def get_by_student(self, student: Student, skip: int, take: int) -> list[tuple[MessageCheck, Message]]:
@@ -481,10 +573,15 @@ class StudentRepository:
     def __init__(self, db: DbContextManager):
         self.db = db
 
-    def get_all_by_group(self, group_id: int) -> list[Student] | None:
+    def get_all(self) -> list[Student]:
         with self.db.create_session() as session:
-            students = session.query(Student).filter(Student.group == group_id).all()
-            return students if students else None
+            return session.query(Student).all()
+
+    def get_group_students(self, group_id: int) -> list[Student]:
+        with self.db.create_session() as session:
+            return session.query(Student) \
+                .filter(Student.group == group_id) \
+                .all()
 
     def get_by_id(self, id: int) -> Student | None:
         with self.db.create_session() as session:
@@ -547,6 +644,13 @@ class StudentRepository:
             session.query(Student) \
                 .filter_by(id=student) \
                 .update(dict(group=group))
+
+    def get_free_variant(self, group: int):
+        with self.db.create_session() as session:
+            var = session.query(func.max(Student.variant)) \
+                .filter_by(group=group) \
+                .scalar() or 0
+            return var + 1
 
     def update_variant(self, student: int, variant_id: int | None):
         with self.db.create_session() as session:
