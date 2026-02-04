@@ -338,12 +338,15 @@ def update_student_password(teacher: Student, id: int):
     student = db.students.get_by_id(id)
     password_form = TeacherChangePasswordForm()
     if password_form.validate_on_submit():
-        message = students.change_password(student.email, password_form.password.data)
-        password_form.password.errors.append(message)
-        if 'Запрос' in message:
-            db.students.confirm(student.email)
-            password_form.password.errors.clear()
-            password_form.password.errors.append('Пароль успешно изменён преподавателем.')
+        if student.teacher:
+            password_form.password.errors.append("Смена паролей преподавателей не поддерживается.")
+        else:
+            message = students.change_password(student.email, password_form.password.data)
+            password_form.password.errors.append(message)
+            if 'Запрос' in message:
+                db.students.confirm(student.email)
+                password_form.password.errors.clear()
+                password_form.password.errors.append('Пароль успешно изменён преподавателем.')
     group = db.groups.get_by_id(student.group)
     groups = db.groups.get_all()
     return render_template(

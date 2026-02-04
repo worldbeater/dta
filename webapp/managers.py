@@ -380,8 +380,6 @@ class StudentManager:
         if self.blocked(email):
             return "Данный адрес электронной почты заблокирован."
         student = self.students.find_by_email(email)
-        if student.teacher:
-            return "Смена паролей преподавателей через веб-интерфейс не поддерживается."
         if not self.confirmed(email) and not student.provider:
             return (f"Пользователь не подтверждён! Отправьте пустое сообщение с Вашего адреса "
                     f"электронной почты {email} на наш адрес {self.config.config.imap_login} "
