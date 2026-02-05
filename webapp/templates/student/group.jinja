@@ -123,14 +123,14 @@
             </span>
           </td>
           {% if student.teacher %}
-          <td scope="col" style="border-bottom: 0; width:100px; padding: 0">
-            <span class="p-1 d-block" title="{{ variant.email }}">
+          <td scope="col" style="border-bottom: 0; width:100px; max-width:220px; padding: 0">
+            <small class="p-1 d-block" title="{{ variant.email }}">
               {% if variant.email %}
               {{ variant.email }}
               {% else %}
               <span class="text-muted">Нет</span>
               {% endif %}
-            </span>
+            </small>
           </td>
           {% endif %}
           {% for status in variant.statuses %}
