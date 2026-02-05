@@ -19,37 +19,21 @@
 {% endblock %}
 
 {% block main %}
-<h4 class="card-title fw-bold">
+<h5 class="card-title fw-bold">
   {{ greeting_message }}!
-</h4>
+</h5>
 <div class="card-subtitle mb-2">
   <div class="mt-4">
     <div class="row">
-        {% if group.tasks %}
-        <div class="col-lg-3 mb-sm-3 d-none d-xl-block">
-            <a href="/group/{{ group.id }}/variant/{{ variant.id }}/task/{{ group.tasks[-1].id }}"
-               class="text-decoration-none text-muted">
-                <div class="card h-card overflow-hidden card-body align-content-end poster">
-                    <div class="card-body align-content-end">
-                        <img src="/static/logo.svg" alt="Decoration" class="w-auto mb-3" style="max-height: 70px;">
-                        <h5 class="card-title">Новая задача</h5>
-                        {% if group.tasks[-1].formulation is not none %}
-                            <p class="card-text">{{ group.tasks[-1].formulation }}</p>
-                        {% endif %}
-                    </div>
-                </div>
-            </a>
-        </div>
-        {% endif %}
-        <div class="col-xl-9 col-12">
-            <div class="row text-muted">
+        <div class="col-12">
+            <div class="row">
                 <div class="col-md-4 col-12 mb-3">
                     <div class="card h-card p-3">
-                        <h6 class="">Решено обязательных задач</h6>
+                        <h6 class="">Решено задач</h6>
                         <div class="mt-2 gap-1">
                           <span class="badge alert-success" style="font-size: inherit">{{ variant.solved }}</span> из 
                           <span class="badge alert-secondary" style="font-size: inherit">{{ group.tasks | length }}</span>
-                          ({{ (variant.solved / (group.tasks | length) * 100) | int }}%)
+                          ({{ (variant.solved / (group.tasks | length) * 100) | int }}% выполнено)
                         </div>
                     </div>
                 </div>

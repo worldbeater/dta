@@ -115,11 +115,11 @@
       </thead>
       <tbody style="border-top: 0px">
         {% for variant in group.variants %}
-        <tr>
+        <tr class="{{ 'table-light' if student and student.variant == variant.id else '' }}">
           <td scope="col" style="border-bottom: 0; width:100px; padding: 0">
-            <span class="p-1 d-block {{ 'fw-bold' if student and student.variant == variant.id else '' }}"
+            <span class="p-1 d-block"
                   title="{{ variant.earned }}">
-              {{ variant.id + 1 }}
+              {{ variant.id + 1 }} {{ '(Ваш)' if student and student.variant == variant.id else '' }}
             </span>
           </td>
           {% if student.teacher %}
@@ -128,7 +128,7 @@
               {% if variant.email %}
               {{ variant.email }}
               {% else %}
-              <span class="text-muted">Не выбран</span>
+              <span class="text-muted">Нет</span>
               {% endif %}
             </span>
           </td>
