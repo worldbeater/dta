@@ -124,7 +124,7 @@
           </td>
           {% if student.teacher %}
           <td scope="col" style="border-bottom: 0; width:100px; max-width:220px; padding: 0">
-            <small class="p-1 d-block" title="{{ variant.email }}">
+            <small class="p-1 d-block" style="text-wrap: nowrap; overflow: hidden;" title="{{ variant.email }}">
               {% if variant.email %}
               {{ variant.email }}
               {% else %}
