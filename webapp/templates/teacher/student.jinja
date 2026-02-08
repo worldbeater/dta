@@ -34,7 +34,7 @@
         <div class="col-md-6 mb-1">
           <b class="d-block mb-1">Группа</b>
           <select name="group" class="form-select">
-            <option value="" {{ "selected='selected'" if group is none else "" }}>
+            <option value="-1" {{ "selected='selected'" if group is none else "" }}>
               Не выбрана
             </option>
             {% for g in groups %}
@@ -47,7 +47,7 @@
         <div class="col-md-6 mb-1">
           <b class="d-block mb-1">Вариант</b>
           <select name="variant" class="form-select">
-            <option value="" {{ "selected='selected'" if variant is none else "" }}>
+            <option value="-1" {{ "selected='selected'" if variant is none else "" }}>
               Не выбран
             </option>
             {% for v in variants %}

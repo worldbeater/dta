@@ -330,43 +330,14 @@ def student(teacher: Student):
     )
 
 
-@blueprint.route("/teacher/student/<int:id>/password", methods=["POST"])
-@authorize(db.students, lambda s: s.teacher)
-def update_student_password(teacher: Student, id: int):
-    if not config.config.enable_manual_password_change:
-        return redirect("/teacher")
-    student = db.students.get_by_id(id)
-    password_form = TeacherChangePasswordForm()
-    if password_form.validate_on_submit():
-        if student.teacher:
-            password_form.password.errors.append("Смена паролей преподавателей не поддерживается.")
-        else:
-            message = students.change_password(student.email, password_form.password.data)
-            password_form.password.errors.append(message)
-            if 'Запрос' in message:
-                db.students.confirm(student.email)
-                password_form.password.errors.clear()
-                password_form.password.errors.append('Пароль успешно изменён преподавателем.')
-    group = db.groups.get_by_id(student.group)
-    groups = db.groups.get_all()
-    return render_template(
-        "teacher/student.jinja",
-        user=student,
-        group=group,
-        groups=groups,
-        student=teacher,
-        password_form=password_form,
-    )
-
-
 @blueprint.route("/teacher/student/<int:id>/info", methods=["POST"])
 @authorize(db.students, lambda s: s.teacher)
 def update_student(teacher: Student, id: int):
     student = db.students.get_by_id(id)
-    gid = request.form["group"]
-    vid = request.form["variant"]
-    group = db.groups.get_by_id(gid).id if gid.strip() else None
-    variant = db.variants.get_by_id(vid).id if vid.strip() else None
+    gid = int(request.form["group"])
+    vid = int(request.form["variant"])
+    group = None if gid == -1 else db.groups.get_by_id(gid).id
+    variant = None if vid == -1 else db.variants.get_by_id(vid).id
     db.students.update_group(student.id, group)
     db.students.update_variant(student.id, variant)
     return redirect(url_for("teacher.student", email=student.email))
