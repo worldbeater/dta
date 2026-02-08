@@ -2,7 +2,7 @@ import datetime
 import uuid
 from typing import Callable
 
-from sqlalchemy import desc, exists, func, literal, null, text
+from sqlalchemy import desc, exists, func, literal, null, select, text
 from sqlalchemy.orm import Session
 
 from webapp.models import (
@@ -647,10 +647,17 @@ class StudentRepository:
 
     def get_free_variant(self, group: int):
         with self.db.create_session() as session:
-            var = session.query(func.max(Student.variant)) \
+            occupied = session.query(Student.variant) \
                 .filter_by(group=group) \
-                .scalar() or -1
-            return var + 1
+                .filter(Student.variant.isnot(None)) \
+                .subquery()
+            free = session.query(Variant.id) \
+                .filter(~Variant.id.in_(select(occupied))) \
+                .order_by(Variant.id) \
+                .first()
+            if free:
+                return free.id
+            return None
 
     def update_variant(self, student: int, variant_id: int | None):
         with self.db.create_session() as session:
