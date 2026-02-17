@@ -87,6 +87,7 @@ class TaskBlock(Base):
     id = sa.Column("id", sa.Integer, primary_key=True, nullable=False, autoincrement=True)
     title = sa.Column("title", sa.String, nullable=False)
     weight = sa.Column("weight", sa.Integer, nullable=False)
+    deadline = sa.Column("deadline", sa.DateTime)
 
 
 class Variant(Base):

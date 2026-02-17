@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from flask import Config
 
 from webapp.models import FinalSeed, Group, Status, Student, Task, TaskBlock, TaskStatus, TypeOfTask, Variant
@@ -51,6 +53,7 @@ class TaskDto:
         self.is_random = task.type == TypeOfTask.Random
         self.block_title = block.title if block else ''
         self.block = block and block.id
+        self.deadline = block.deadline if block else None
 
 
 class AchievementDto:
@@ -84,6 +87,7 @@ class TaskStatusDto:
         achievements: list[int],
     ):
         self.task = task.id
+        self.deadline = task.deadline
         self.earned = sum(1 for a in range(len(achievements)) if status and a in status.achievements)
         self.formulation = task.formulation
         self.ip = status.ip if status is not None else "-"
@@ -151,7 +155,7 @@ class TaskStatusDto:
             Status.VerifiedSubmitted: "✓",
             Status.VerifiedFailed: "✓",
             Status.Failed: "x",
-            Status.NotSubmitted: "-",
+            Status.NotSubmitted: "x" if self.disabled else "-",
         })
 
     @property
@@ -197,8 +201,8 @@ class TaskStatusDto:
 
     @property
     def disabled(self) -> bool:
-        active = self.external.active
-        return not active or self.readonly
+        lasting = not self.deadline or self.deadline > datetime.now()
+        return not self.external.active or self.readonly or not lasting
 
     def map_achievements(self, status: TaskStatus | None, achievements: list[int]):
         dtos = []
