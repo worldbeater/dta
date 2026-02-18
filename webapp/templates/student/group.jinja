@@ -97,7 +97,7 @@
     <table class="table table-sm table-bordered table-hover mb-0" style="min-width:650px">
       <thead>
         <tr>
-          <th scope="col" style="width:50px">Вар.</th>
+          <th scope="col" style="width:70px">Вар.</th>
           {% if student.teacher %}
           <th scope="col" style="width:100px">Почта</th>
           {% endif %}
@@ -116,10 +116,10 @@
       <tbody style="border-top: 0px">
         {% for variant in group.variants %}
         <tr class="{{ 'table-light' if student and student.variant == variant.id else '' }}">
-          <td scope="col" style="border-bottom: 0; width:50px; padding: 0">
+          <td scope="col" style="border-bottom: 0; width:70px; padding: 0">
             <span class="p-1 d-block"
                   title="{{ variant.earned }}">
-              {{ variant.id + 1 }} {{ '(Ваш)' if student and student.variant == variant.id else '' }}
+              {{ variant.id + 1 }} {{ 'Ваш' if student and student.variant == variant.id else '' }}
             </span>
           </td>
           {% if student.teacher %}
