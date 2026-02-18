@@ -316,7 +316,7 @@ class StatusManager:
             output=check.output,
             status=check.status,
             achievements=[]
-        ), []), message.code, check.time, message.time, message.ip, student)
+        ), [], None), message.code, check.time, message.time, message.ip, student)
 
 
 class HomeManager:
