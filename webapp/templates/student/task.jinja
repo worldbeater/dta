@@ -38,7 +38,7 @@
     Состояние задачи
   </h6>
   <h6 class="card-subtitle mb-2 text-muted">
-    Здесь Вы можете отслеживать состояние задания после отправки решения.<br />
+    Здесь Вы можете отслеживать состояние задания после отправки решения.
     {% if status.deadline is not none %}
     Сдать решение нужно до <span class="text-primary">{{ status.deadline }}</span>.
     {% endif %}
@@ -46,7 +46,8 @@
   {% if status.status == 4 %}
   {% else %}
   <div class="mt-2 mb-2">
-    <span class="badge alert-{{ status.color }}" style="font-size: inherit" {% if status.reviewer %}title="{{ status.reviewer }}"{% endif %}>
+    <span class="badge alert-{{ status.color }}" style="font-size: inherit"
+          {% if student and student.teacher and status.reviewer %}title="{{ status.reviewer }}"{% endif %}>
       {{ status.name }}
     </span>
   </div>
