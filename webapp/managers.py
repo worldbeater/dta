@@ -249,8 +249,8 @@ class StatusManager:
         for task, block in tasks:
             status = statuses.get((variant.id, task.id))
             e = self.external.get_external_task(group, variant, task, seed, config)
-            achievements = self.__get_task_achievements(task.id)
-            dtos.append(TaskStatusDto(group, variant, TaskDto(task, block, seed), status, e, config, achievements))
+            ach = self.__get_task_achievements(task.id)
+            dtos.append(TaskStatusDto(group, variant, TaskDto(task, block, seed), status, e, config, ach, None))
         return VariantDto(variant, dtos, students.get(variant.id))
 
     def __get_task_achievements(self, task: int) -> list[int]:
@@ -271,14 +271,16 @@ class StatusManager:
 
     def get_task_status(self, gid: int, vid: int, tid: int) -> TaskStatusDto:
         status = self.statuses.get_task_status(tid, vid, gid)
+        reviewer = status and status.reviewer is not None and self.students.get_by_id(status.reviewer)
         achievements = self.__get_task_achievements(tid)
-        return self.__get_task_status_dto(gid, vid, tid, status, achievements)
+        return self.__get_task_status_dto(gid, vid, tid, status, achievements, reviewer)
 
     def __get_task_status_dto(
         self,
         gid: int, vid: int, tid: int,
         status: TaskStatus | None,
-        achievements: list[int]
+        achievements: list[int],
+        reviewer: Student | None,
     ) -> TaskStatusDto:
         config = self.config.config
         group = self.groups.get_by_id(gid)
@@ -286,7 +288,7 @@ class StatusManager:
         task, block = self.tasks.get_by_id_with_block(tid)
         seed = self.seeds.get_final_seed(gid)
         ext = self.external.get_external_task(group, variant, task, seed, self.config.config)
-        return TaskStatusDto(group, variant, TaskDto(task, block, seed), status, ext, config, achievements)
+        return TaskStatusDto(group, variant, TaskDto(task, block, seed), status, ext, config, achievements, reviewer)
 
     def get_submissions_statuses_by_info(self, gid: int, vid: int, tid: int, skip: int, take: int):
         checks = self.checks.get_by_task(gid, vid, tid, skip, take, self.config.config.enable_registration)

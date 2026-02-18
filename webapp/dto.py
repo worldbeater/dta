@@ -85,9 +85,11 @@ class TaskStatusDto:
         external: ExternalTaskDto,
         config: AppConfig,
         achievements: list[int],
+        reviewer: Student | None,
     ):
         self.task = task.id
         self.deadline = task.deadline
+        self.reviewer = reviewer and reviewer.email
         self.earned = sum(1 for a in range(len(achievements)) if status and a in status.achievements)
         self.formulation = task.formulation
         self.ip = status.ip if status is not None else "-"
@@ -221,7 +223,7 @@ class VariantDto:
         self.id = int(variant.id)
         self.email = student.email if student else ''
         self.statuses = statuses
-        self.earned = sum(s.earned for s in statuses if s.earned > 1)
+        self.earned = sum(s.earned for s in statuses)
         self.solved = sum(s.status in [
             Status.Checked,
             Status.CheckedSubmitted,

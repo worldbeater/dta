@@ -45,8 +45,10 @@
   </h6>
   {% if status.status == 4 %}
   {% else %}
-  <div class="badge alert-{{ status.color }} mt-2 mb-2" style="font-size: inherit">
-    {{ status.name }}
+  <div class="mt-2 mb-2">
+    <span class="badge alert-{{ status.color }}" style="font-size: inherit" {% if status.reviewer %}title="{{ status.reviewer }}"{% endif %}>
+      {{ status.name }}
+    </span>
   </div>
   {% if status.error_message is not none and status.error_message and (not registration or student) %}
   <div>Подробные сведения об ошибке:</div>
