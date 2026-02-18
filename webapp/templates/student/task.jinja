@@ -47,7 +47,9 @@
   {% else %}
   <div class="mt-2 mb-2">
     <span class="badge alert-{{ status.color }}" style="font-size: inherit"
-          {% if student and student.teacher and status.reviewer %}title="{{ status.reviewer }}"{% endif %}>
+          {% if student and student.teacher and status.reviewer %}
+          title="{{ status.reviewer }} {{ status.reviewed_at }}"
+          {% endif %}>
       {{ status.name }}
     </span>
   </div>

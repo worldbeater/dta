@@ -335,10 +335,18 @@ class TaskStatusRepository:
     def create_or_update(self, task: int, variant: int, group: int, code: str,
                          status: int, output: str, ip: str, reviewer: int | None):
         now = datetime.datetime.now()
+        reviewed_at = now if reviewer is not None else None
         with self.db.create_session() as session:
             query = session.query(TaskStatus).filter_by(task=task, variant=variant, group=group)
             if query.count():
-                query.update(dict(code=code, status=status, output=output, ip=ip, time=now, reviewer=reviewer))
+                query.update(dict(
+                    code=code,
+                    status=status,
+                    output=output,
+                    ip=ip,
+                    time=now,
+                    reviewer=reviewer,
+                    reviewed_at=reviewed_at))
                 updated: TaskStatus = query.one()
                 return updated
             model = TaskStatus(
@@ -348,6 +356,7 @@ class TaskStatusRepository:
                 ip=ip,
                 time=now,
                 reviewer=reviewer,
+                reviewed_at=reviewed_at,
                 task=task,
                 variant=variant,
                 group=group)
