@@ -100,9 +100,13 @@ class TaskStatusDto:
         self.external = external
         self.status = Status.NotSubmitted if status is None else status.status
         self.checked = self.status in [Status.Checked, Status.CheckedSubmitted, Status.CheckedFailed]
-        self.error_message = status.output if self.status in [Status.Failed, Status.CheckedFailed] else None
         self.readonly = config.readonly
         self.achievements = self.map_achievements(status, achievements)
+        self.error_message = status.output if self.status in [
+            Status.Failed,
+            Status.CheckedFailed,
+            Status.VerifiedFailed,
+        ] else None
 
     @property
     def submission_url(self) -> str:
