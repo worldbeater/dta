@@ -128,22 +128,38 @@
       <div class="col-md-4">
         <a class="btn btn-outline-primary w-100 d-block"
            href="/teacher/submissions/group/{{ status.group }}/variant/{{ status.variant }}/task/{{ status.task }}">
-          История решений 📕
+          История решений
         </a>
       </div>
       {% if status.can_verify %}
       <div class="col-md-4">
-        <a class="btn btn-outline-success w-100 d-block"
-           href="/teacher/verify/group/{{ status.group }}/variant/{{ status.variant }}/task/{{ status.task }}">
-          Задача защищена ✅
-        </a>
+        <div class="btn-group w-100">
+          <a class="btn btn-outline-success"
+             href="/teacher/verify/group/{{ status.group }}/variant/{{ status.variant }}/task/{{ status.task }}">
+            Задача защищена
+          </a>
+          <button type="button"
+                  class="btn btn-outline-success dropdown-toggle dropdown-toggle-split" 
+                  data-bs-toggle="dropdown" 
+                  aria-expanded="false">
+            <span class="visually-hidden">Раскрыть</span>
+          </button>
+          <ul class="dropdown-menu dropdown-menu-end">
+            <li>
+              <a class="dropdown-item"
+                 href="/teacher/verify-block/group/{{ status.group }}/variant/{{ status.variant }}/task/{{ status.task }}">
+                Защищён весь блок задач
+              </a>
+            </li>
+          </ul>
+        </div>
       </div>
       {% endif %}
       {% if status.can_unverify %}
       <div class="col-md-4">
         <a class="btn btn-outline-danger w-100 d-block"
            href="/teacher/unverify/group/{{ status.group }}/variant/{{ status.variant }}/task/{{ status.task }}">
-          Задача не защищена ❌
+          Задача не защищена
         </a>
       </div>
       {% endif %}

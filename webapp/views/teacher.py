@@ -90,6 +90,16 @@ def unverify(teacher: Student, gid: int, vid: int, tid: int):
     return redirect(f'/group/{gid}')
 
 
+@blueprint.route("/teacher/verify-block/group/<int:gid>/variant/<int:vid>/task/<int:tid>", methods=["GET"])
+@authorize(db.students, lambda s: s.teacher)
+def verify_block(teacher: Student, gid: int, vid: int, tid: int):
+    _, block = db.tasks.get_by_id_with_block(tid)
+    if block:
+        for task in db.tasks.get_all_in_block(block.id):
+            db.statuses.verify(task.id, vid, gid, teacher.id)
+    return redirect(f'/group/{gid}')
+
+
 @blueprint.route("/teacher", methods=["GET"])
 @authorize(db.students, lambda s: s.teacher)
 def dashboard(teacher: Student):
