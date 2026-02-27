@@ -230,9 +230,9 @@ class VariantDto:
         self.statuses = statuses
         self.earned = sum(s.earned for s in statuses)
         self.solved = sum(s.status in [
-            Status.Checked,
-            Status.CheckedSubmitted,
-            Status.CheckedFailed,
+            Status.Verified,
+            Status.VerifiedSubmitted,
+            Status.VerifiedFailed,
         ] for s in statuses)
 
 
