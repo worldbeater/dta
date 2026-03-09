@@ -203,7 +203,7 @@ def task(student: Student | None, gid: int, vid: int, tid: int):
     if student and not student.teacher and student.group != gid:
         return redirect("/")
     status = statuses.get_task_status(gid, vid, tid)
-    foreign = not student.teacher and (student.group != gid or student.variant != vid)
+    foreign = student and not student.teacher and (student.group != gid or student.variant != vid)
     disabled = status.disabled or config.config.registration and foreign
     form = StudentMessageForm()
     return render_template(
@@ -227,7 +227,7 @@ def submit_task(student: Student | None, gid: int, vid: int, tid: int):
     if student and not student.teacher and student.group != gid:
         return redirect("/")
     status = statuses.get_task_status(gid, vid, tid)
-    foreign = not student.teacher and (student.group != gid or student.variant != vid)
+    foreign = student and not student.teacher and (student.group != gid or student.variant != vid)
     disabled = status.disabled or config.config.registration and foreign
     form = StudentMessageForm()
     ip = get_real_ip(request)
