@@ -2,7 +2,7 @@ from datetime import datetime
 
 from flask import Config
 
-from webapp.models import FinalSeed, Group, Status, Student, Task, TaskBlock, TaskStatus, TypeOfTask, Variant
+from webapp.models import DeadlineOverride, FinalSeed, Group, Status, Student, Task, TaskBlock, TaskStatus, TypeOfTask, Variant
 
 
 class AppConfig:
@@ -86,9 +86,10 @@ class TaskStatusDto:
         config: AppConfig,
         achievements: list[int],
         reviewer: Student | None,
+        do: DeadlineOverride | None,
     ):
         self.task = task.id
-        self.deadline = task.deadline
+        self.deadline = do.deadline if do and task.deadline and do.deadline > task.deadline else task.deadline
         self.reviewer = reviewer.email if reviewer else None
         self.reviewed_at = status.reviewed_at or '' if status else ''
         self.earned = sum(1 for a in range(len(achievements)) if status and a in status.achievements)
@@ -162,7 +163,7 @@ class TaskStatusDto:
             Status.VerifiedSubmitted: "✓",
             Status.VerifiedFailed: "✓",
             Status.Failed: "x",
-            Status.NotSubmitted: "⋅" if self.disabled else "-",
+            Status.NotSubmitted: "−" if self.disabled else "⋅",
         })
 
     @property

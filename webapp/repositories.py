@@ -130,14 +130,12 @@ class TaskRepository:
                 .filter(DeadlineOverride.student == student) \
                 .all()
 
-    def is_deadline_override_active(self, student: int, block: int) -> bool:
-        now = datetime.datetime.now()
+    def get_student_deadline_override(self, student: int, block: int):
         with self.db.create_session() as session:
-            override = session.query(DeadlineOverride) \
+            return session.query(DeadlineOverride) \
                 .filter(DeadlineOverride.student == student,
                         DeadlineOverride.block == block) \
                 .first()
-            return override and now <= override.deadline
 
     def get_all(self) -> list[Task]:
         with self.db.create_session() as session:

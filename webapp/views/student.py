@@ -11,7 +11,7 @@ from jwt.exceptions import PyJWTError
 from flask import Blueprint, Response
 from flask import current_app as app
 from flask import redirect, render_template, request, send_from_directory
-
+import datetime
 from webapp.forms import StudentChangePasswordForm, StudentLoginForm, StudentMessageForm, StudentRegisterForm
 from webapp.managers import (
     AchievementManager,
@@ -202,7 +202,7 @@ def task(student: Student | None, gid: int, vid: int, tid: int):
         return redirect("/login")
     if student and not student.teacher and student.group != gid:
         return redirect("/")
-    status = statuses.get_task_status(gid, vid, tid)
+    status = statuses.get_task_status(gid, vid, tid, student)
     foreign = student and not student.teacher and (student.group != gid or student.variant != vid)
     disabled = status.disabled or config.config.registration and foreign
     form = StudentMessageForm()
@@ -216,6 +216,7 @@ def task(student: Student | None, gid: int, vid: int, tid: int):
         form=form,
         student=student,
         disabled=disabled,
+        now=datetime.datetime.now(),
     )
 
 
@@ -226,7 +227,7 @@ def submit_task(student: Student | None, gid: int, vid: int, tid: int):
         return redirect("/login")
     if student and not student.teacher and student.group != gid:
         return redirect("/")
-    status = statuses.get_task_status(gid, vid, tid)
+    status = statuses.get_task_status(gid, vid, tid, student)
     foreign = student and not student.teacher and (student.group != gid or student.variant != vid)
     disabled = status.disabled or config.config.registration and foreign
     form = StudentMessageForm()
@@ -253,6 +254,8 @@ def submit_task(student: Student | None, gid: int, vid: int, tid: int):
         status=status,
         form=form,
         student=student,
+        disabled=disabled,
+        now=datetime.datetime.now(),
     )
 
 
