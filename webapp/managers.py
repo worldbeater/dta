@@ -281,7 +281,7 @@ class StatusManager:
         self,
         gid: int, vid: int, tid: int,
         status: TaskStatus | None,
-        achievements: list[int],
+        ach: list[int],
         reviewer: Student | None,
         student: Student | None,
     ) -> TaskStatusDto:
@@ -292,7 +292,7 @@ class StatusManager:
         seed = self.seeds.get_final_seed(gid)
         ext = self.external.get_external_task(group, variant, task, seed, self.config.config)
         do = student and block and self.tasks.get_student_deadline_override(student.id, block.id)
-        return TaskStatusDto(group, variant, TaskDto(task, block, seed), status, ext, config, achievements, reviewer, do)
+        return TaskStatusDto(group, variant, TaskDto(task, block, seed), status, ext, config, ach, reviewer, do)
 
     def get_submissions_statuses_by_info(self, gid: int, vid: int, tid: int, skip: int, take: int):
         checks = self.checks.get_by_task(gid, vid, tid, skip, take, self.config.config.enable_registration)

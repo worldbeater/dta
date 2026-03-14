@@ -2,7 +2,18 @@ from datetime import datetime
 
 from flask import Config
 
-from webapp.models import DeadlineOverride, FinalSeed, Group, Status, Student, Task, TaskBlock, TaskStatus, TypeOfTask, Variant
+from webapp.models import (
+    DeadlineOverride,
+    FinalSeed,
+    Group,
+    Status,
+    Student,
+    Task,
+    TaskBlock,
+    TaskStatus,
+    TypeOfTask,
+    Variant
+)
 
 
 class AppConfig:

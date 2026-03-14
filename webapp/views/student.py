@@ -1,3 +1,4 @@
+import datetime
 import os
 from secrets import token_hex
 
@@ -11,7 +12,7 @@ from jwt.exceptions import PyJWTError
 from flask import Blueprint, Response
 from flask import current_app as app
 from flask import redirect, render_template, request, send_from_directory
-import datetime
+
 from webapp.forms import StudentChangePasswordForm, StudentLoginForm, StudentMessageForm, StudentRegisterForm
 from webapp.managers import (
     AchievementManager,
