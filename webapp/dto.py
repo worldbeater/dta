@@ -162,7 +162,7 @@ class TaskStatusDto:
             Status.VerifiedSubmitted: "✓",
             Status.VerifiedFailed: "✓",
             Status.Failed: "x",
-            Status.NotSubmitted: "x" if self.disabled else "-",
+            Status.NotSubmitted: "⋅" if self.disabled else "-",
         })
 
     @property
