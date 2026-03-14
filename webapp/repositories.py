@@ -7,6 +7,7 @@ from sqlalchemy.orm import Session
 
 from webapp.models import (
     AllowedIp,
+    DeadlineOverride,
     FinalSeed,
     Group,
     Mailer,
@@ -102,6 +103,39 @@ class GroupRepository:
 class TaskRepository:
     def __init__(self, db: DbContextManager):
         self.db = db
+
+    def override_deadline(self, student: int, block: int, deadline: datetime.datetime, reason: str, teacher: int):
+        with self.db.create_session() as session:
+            session.query(DeadlineOverride) \
+                .filter(DeadlineOverride.student == student,
+                        DeadlineOverride.block == block) \
+                .delete()
+            session.add(DeadlineOverride(
+                student=student,
+                block=block,
+                deadline=deadline,
+                reason=reason,
+                teacher=teacher))
+
+    def remove_deadline_override(self, student: int, block: int):
+        with self.db.create_session() as session:
+            session.query(DeadlineOverride) \
+                .filter(DeadlineOverride.student == student,
+                        DeadlineOverride.block == block) \
+                .delete()
+
+    def get_student_deadline_overrides(self, student: int):
+        with self.db.create_session() as session:
+            return session.query(DeadlineOverride) \
+                .filter(DeadlineOverride.student == student) \
+                .all()
+
+    def get_student_deadline_override(self, student: int, block: int):
+        with self.db.create_session() as session:
+            return session.query(DeadlineOverride) \
+                .filter(DeadlineOverride.student == student,
+                        DeadlineOverride.block == block) \
+                .first()
 
     def get_all(self) -> list[Task]:
         with self.db.create_session() as session:

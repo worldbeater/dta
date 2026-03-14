@@ -79,7 +79,7 @@
 {% endif %}
 {% else %}
 <h6 class="card-subtitle mb-3 text-muted">
-  Нажмите на соответствующую Вашему варианту ячейку, чтобы перейти к задаче.
+  Нажмите на ячейку Вашего варианта, чтобы перейти к задаче.
   {% if student.teacher and exam %}
     {% if hide_pending %}
       <a class="text-decoration-none" href="/group/{{ group.id }}">
@@ -94,7 +94,7 @@
 </h6>
 <div class="position-relative">
   <div style="overflow-x:auto">
-    <table class="table table-sm table-bordered table-hover mb-0" style="min-width:650px">
+    <table class="table table-sm table-bordered table-hover mb-0" style="min-width:850px">
       <thead>
         <tr>
           <th scope="col" style="width:70px">Вар.</th>
@@ -119,7 +119,7 @@
           <td scope="col" style="border-bottom: 0; width:70px; padding: 0">
             <span class="p-1 d-block"
                   title="{{ variant.earned }}">
-              {{ variant.id + 1 }} {{ 'Ваш' if student and student.variant == variant.id else '' }}
+              {{ variant.id + 1 }} <small>{{ 'Ваш' if student and student.variant == variant.id else '' }}</small>
             </span>
           </td>
           {% if student.teacher %}

@@ -1,3 +1,5 @@
+import datetime
+
 from flask_jwt_extended import unset_jwt_cookies
 from flask_jwt_extended.exceptions import JWTExtendedException
 from flask_paginate import Pagination
@@ -249,12 +251,12 @@ def messages_csv(teacher: Student):
     return output
 
 
-@blueprint.route("/teacher/points", methods=["GET"])
+@blueprint.route("/teacher/points", methods=["POST"])
 @authorize(db.students, lambda s: s.teacher)
 def points_csv(teacher: Student):
     separator = request.args.get('separator')
-    group_id = request.args.get('group', None, type=int)
-    value = exports.export_points(group_id, separator)
+    groups = list(map(int, request.form.getlist('groups')))
+    value = exports.export_points(groups, separator)
     output = make_response(value)
     output.headers["Content-Disposition"] = "attachment; filename=points.csv"
     output.headers["Content-type"] = "text/csv"
@@ -320,24 +322,47 @@ def disallow_ip(teacher: Student, id: int):
 @authorize(db.students, lambda s: s.teacher)
 def student(teacher: Student):
     email = request.args.get("email")
-    user = db.students.find_by_email(email)
-    if not user:
+    student = db.students.find_by_email(email)
+    if not student:
         return redirect("/teacher")
-    group = None if user.group is None else db.groups.get_by_id(user.group)
+    blocks = db.tasks.get_blocks()
     groups = db.groups.get_all()
-    variant = None if user.variant is None else db.variants.get_by_id(user.variant)
     variants = db.variants.get_all()
+    overrides = db.tasks.get_student_deadline_overrides(student.id)
+    group = None if student.group is None else db.groups.get_by_id(student.group)
+    variant = None if student.variant is None else db.variants.get_by_id(student.variant)
     return render_template(
         "teacher/student.jinja",
-        user=user,
+        user=student,
         group=group,
         groups=groups,
         variant=variant,
         variants=variants,
         student=teacher,
+        blocks=blocks,
+        overrides=overrides,
         password_form=TeacherChangePasswordForm(),
         enable_manual_password_change=config.config.enable_manual_password_change,
     )
+
+
+@blueprint.route("/teacher/student/<int:id>/override-deadline", methods=["POST"])
+@authorize(db.students, lambda s: s.teacher)
+def deadline_override(teacher: Student, id: int):
+    student = db.students.get_by_id(id)
+    block = request.form.get("block", type=int)
+    deadline = request.form.get("deadline", type=lambda t: datetime.datetime.strptime(t, "%Y.%m.%d %H:%M"))
+    reason = request.form.get("reason", type=str)
+    db.tasks.override_deadline(student.id, block, deadline, reason, teacher.id)
+    return redirect(url_for("teacher.student", email=student.email))
+
+
+@blueprint.route("/teacher/student/<int:id>/override-deadline/<int:block>/delete", methods=["GET"])
+@authorize(db.students, lambda s: s.teacher)
+def delete_deadline_override(teacher: Student, id: int, block: int):
+    student = db.students.get_by_id(id)
+    db.tasks.remove_deadline_override(student.id, block)
+    return redirect(url_for("teacher.student", email=student.email))
 
 
 @blueprint.route("/teacher/student/<int:id>/info", methods=["POST"])

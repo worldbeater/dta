@@ -151,14 +151,13 @@
   </div>
   <div class="col-12 mb-3">
     <b class="card-title d-block">Выгрузка таблицы с оценками для СДО</b>
-    <form action="/teacher/points" method="GET" class="w-100">
-      <select class="form-select mb-2" name="group">
+    <form action="/teacher/points" method="POST" class="w-100">
+      <select class="form-select mb-2" name="groups" multiple>
         {% for group in groups %}
         <option value="{{ group.id }}">
           {{ group.title }}
         </option>
         {% endfor %}
-        <option value="all">Все группы</option>
       </select>
       <button type="submit" class="btn btn-outline-primary w-100 d-block">
         Выгрузить таблицу

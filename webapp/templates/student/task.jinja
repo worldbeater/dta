@@ -38,9 +38,11 @@
     Состояние задачи
   </h6>
   <h6 class="card-subtitle mb-2 text-muted">
-    Здесь Вы можете отслеживать состояние задания после отправки решения.
+    Здесь Вы можете отслеживать состояние задания.
     {% if status.deadline is not none %}
-    Сдать решение нужно до <span class="text-primary">{{ status.deadline }}</span>.
+    Сдать решение нужно {% if status.deadline < now %}было {% endif %}до <span class="text-{% if status.deadline > now %}primary{% else %}danger{% endif %}">
+      {{ status.deadline }}
+    </span>
     {% endif %}
   </h6>
   {% if status.status == 4 %}

@@ -214,7 +214,7 @@ class StatusManager:
         students = self.__get_students(group.id)
         dtos: list[VariantDto] = []
         for var in variants:
-            dto = self.__get_variant(group, var, tasks, statuses, seed, config, students)
+            dto = self.__get_variant(group, var, tasks, statuses, seed, config, students.get(var.id), False)
             if hide_pending and any(status.status not in [
                 Status.Checked,
                 Status.CheckedFailed,
@@ -243,15 +243,17 @@ class StatusManager:
         statuses: dict[tuple[int, int], TaskStatus],
         seed: FinalSeed | None,
         config: AppConfig,
-        students: dict[int, Student],
+        student: Student | None,
+        load_override: bool,
     ) -> VariantDto:
         dtos: list[TaskStatusDto] = []
         for task, block in tasks:
             status = statuses.get((variant.id, task.id))
             e = self.external.get_external_task(group, variant, task, seed, config)
             ach = self.__get_task_achievements(task.id)
-            dtos.append(TaskStatusDto(group, variant, TaskDto(task, block, seed), status, e, config, ach, None))
-        return VariantDto(variant, dtos, students.get(variant.id))
+            o = student and block and load_override and self.tasks.get_student_deadline_override(student.id, block.id)
+            dtos.append(TaskStatusDto(group, variant, TaskDto(task, block, seed), status, e, config, ach, None, o))
+        return VariantDto(variant, dtos, student)
 
     def __get_task_achievements(self, task: int) -> list[int]:
         achievements = self.achievements.read_achievements()
@@ -267,20 +269,21 @@ class StatusManager:
         statuses = self.__get_statuses(group.id)
         tasks = self.tasks.get_all_with_blocks()
         students = self.__get_students(group.id)
-        return self.__get_variant(group, variant, tasks, statuses, seed, config, students)
+        return self.__get_variant(group, variant, tasks, statuses, seed, config, students.get(variant.id), True)
 
-    def get_task_status(self, gid: int, vid: int, tid: int) -> TaskStatusDto:
+    def get_task_status(self, gid: int, vid: int, tid: int, student: Student | None) -> TaskStatusDto:
         status = self.statuses.get_task_status(tid, vid, gid)
         reviewer = status and status.reviewer is not None and self.students.get_by_id(status.reviewer)
         achievements = self.__get_task_achievements(tid)
-        return self.__get_task_status_dto(gid, vid, tid, status, achievements, reviewer)
+        return self.__get_task_status_dto(gid, vid, tid, status, achievements, reviewer, student)
 
     def __get_task_status_dto(
         self,
         gid: int, vid: int, tid: int,
         status: TaskStatus | None,
-        achievements: list[int],
+        ach: list[int],
         reviewer: Student | None,
+        student: Student | None,
     ) -> TaskStatusDto:
         config = self.config.config
         group = self.groups.get_by_id(gid)
@@ -288,7 +291,8 @@ class StatusManager:
         task, block = self.tasks.get_by_id_with_block(tid)
         seed = self.seeds.get_final_seed(gid)
         ext = self.external.get_external_task(group, variant, task, seed, self.config.config)
-        return TaskStatusDto(group, variant, TaskDto(task, block, seed), status, ext, config, achievements, reviewer)
+        do = student and block and self.tasks.get_student_deadline_override(student.id, block.id)
+        return TaskStatusDto(group, variant, TaskDto(task, block, seed), status, ext, config, ach, reviewer, do)
 
     def get_submissions_statuses_by_info(self, gid: int, vid: int, tid: int, skip: int, take: int):
         checks = self.checks.get_by_task(gid, vid, tid, skip, take, self.config.config.enable_registration)
@@ -316,7 +320,7 @@ class StatusManager:
             output=check.output,
             status=check.status,
             achievements=[]
-        ), [], None), message.code, check.time, message.time, message.ip, student)
+        ), [], None, None), message.code, check.time, message.time, message.ip, student)
 
 
 class HomeManager:
@@ -483,13 +487,15 @@ class ExportManager:
         table = self.__create_exam_table(group_id)
         return self.__create_csv(table, separator)
 
-    def export_points(self, group_id: int | None, separator: str) -> str:
-        table = self.__create_points_table(group_id)
+    def export_points(self, groups: list[int], separator: str) -> str:
+        table = self.__create_points_table(groups)
         return self.__create_csv(table, separator)
 
-    def __create_points_table(self, group_id: int | None) -> list[list[str]]:
+    def __create_points_table(self, groups: list[int]) -> list[list[str]]:
         blocks = self.tasks.get_blocks()
-        students = self.students.get_all() if group_id is None else self.students.get_group_students(group_id)
+        students = []
+        for group in groups:
+            students.extend(self.students.get_group_students(group))
         table = [['Адрес электронной почты', *[block.title for block in blocks]]]
         for student in students:
             if student.variant is None or student.group is None:
@@ -535,7 +541,7 @@ class ExportManager:
             row = [group_title, variant.id + 1]
             score = 0
             for task in tasks:
-                info = self.status_manager.get_task_status(group_id, variant.id, task.id)
+                info = self.status_manager.get_task_status(group_id, variant.id, task.id, None)
                 status = 1 if info.status.value == 2 else 0
                 row.append(status)
                 row.append(info.external.group_title)
