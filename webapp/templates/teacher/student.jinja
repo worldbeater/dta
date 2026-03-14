@@ -1,4 +1,7 @@
 {% extends 'layout.jinja' %}
+{% block head %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/flatpickr.min.css') }}">
+{% endblock %}
 {% block header %}
 <li class="breadcrumb-item">
   <a class="text-decoration-none" href="/teacher">
@@ -97,4 +100,52 @@
   </div>
   {% endif %}
 </div>
+<div class="row mt-1">
+  {% if overrides %}
+  <div class="col-12">
+    <b class="d-block mb-1">Продления сроков сдачи</b>
+  </div>
+  {% endif %}
+  {% for override in overrides %}
+  <div class="col-12">
+    <div class="mb-2">
+      Блок {{ override.block + 1 }}. Продлено до {{ override.deadline.strftime('%Y.%m.%d %H:%M') }}, причина: {{ override.reason or 'не указана' }}.
+      <a class="text-decoration-none" href="/teacher/student/{{ user.id }}/override-deadline/{{ override.block }}/delete">
+        Отменить продление
+      </a>
+    </div>
+  </div>
+  {% endfor %}
+  <div class="col-12">
+    <b class="d-block mb-1">Разрешить продление</b>
+    <form action="/teacher/student/{{ user.id }}/override-deadline" method="POST">
+      <select class="form-select mb-2" name="block" required>
+        {% for block_ in blocks %}
+        <option value="{{ block_.id }}">
+          {{ block_.id + 1}}. {{ block_.title }} +{{ block_.weight }}, до {{ block_.deadline.strftime('%Y.%m.%d %H:%M') }}
+        </option>
+        {% endfor %}
+      </select>
+      <input name="deadline" type="text" id="deadline" class="form-control mb-2" placeholder="Выберите дату" required />
+      <input name="reason" type="text" class="form-control mb-2" placeholder="Причина продления" required />
+      <button type="submit" class="btn btn-outline-primary w-100 d-block mb-2">
+        Разрешить продление
+      </button>
+    </form>
+  </div>
+</div>
+<script src="{{ url_for('static', filename='js/flatpickr.min.js') }}"></script>
+<script src="{{ url_for('static', filename='js/flatpickr.ru.min.js') }}"></script>
+<script>
+  var oneWeekFromNow = new Date();
+  oneWeekFromNow.setHours(23);
+  oneWeekFromNow.setMinutes(59);
+  flatpickr("#deadline", {
+    enableTime: true,
+    dateFormat: "Y.m.d H:i",
+    minDate: "today",
+    locale: "ru",
+    defaultDate: oneWeekFromNow,
+  });
+</script>
 {% endblock %}
