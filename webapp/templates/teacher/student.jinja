@@ -122,7 +122,7 @@
       <select class="form-select mb-2" name="block" required>
         {% for block_ in blocks %}
         <option value="{{ block_.id }}">
-          {{ block_.id + 1}}. {{ block_.title }} +{{ block_.weight }}, до {{ block_.deadline.strftime('%Y.%m.%d %H:%M') }}
+          Блок {{ block_.id + 1}}. {{ block_.title }} +{{ block_.weight }}
         </option>
         {% endfor %}
       </select>
