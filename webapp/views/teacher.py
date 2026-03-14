@@ -249,12 +249,12 @@ def messages_csv(teacher: Student):
     return output
 
 
-@blueprint.route("/teacher/points", methods=["GET"])
+@blueprint.route("/teacher/points", methods=["POST"])
 @authorize(db.students, lambda s: s.teacher)
 def points_csv(teacher: Student):
     separator = request.args.get('separator')
-    group_id = request.args.get('group', None, type=int)
-    value = exports.export_points(group_id, separator)
+    groups = list(map(int, request.form.getlist('groups')))
+    value = exports.export_points(groups, separator)
     output = make_response(value)
     output.headers["Content-Disposition"] = "attachment; filename=points.csv"
     output.headers["Content-type"] = "text/csv"

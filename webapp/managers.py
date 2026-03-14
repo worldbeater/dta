@@ -483,13 +483,15 @@ class ExportManager:
         table = self.__create_exam_table(group_id)
         return self.__create_csv(table, separator)
 
-    def export_points(self, group_id: int | None, separator: str) -> str:
-        table = self.__create_points_table(group_id)
+    def export_points(self, groups: list[int], separator: str) -> str:
+        table = self.__create_points_table(groups)
         return self.__create_csv(table, separator)
 
-    def __create_points_table(self, group_id: int | None) -> list[list[str]]:
+    def __create_points_table(self, groups: list[int]) -> list[list[str]]:
         blocks = self.tasks.get_blocks()
-        students = self.students.get_all() if group_id is None else self.students.get_group_students(group_id)
+        students = []
+        for group in groups:
+            students.extend(self.students.get_group_students(group))
         table = [['Адрес электронной почты', *[block.title for block in blocks]]]
         for student in students:
             if student.variant is None or student.group is None:
