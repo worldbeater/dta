@@ -79,11 +79,11 @@ class AnalyzeCmd:
         print(f'Cleared achievements, analyzing {len(checked)} checked programs...')
         for check in checked:
             message = db.messages.get_by_id(check.message)
-            analyzed, order = worker.analyze_solution(
+            analyzed, order, _ = worker.get_analysis_result(worker.analyze_solution(
                 analytics_path=config.analytics_path,
                 code=message.code,
                 task=message.task,
-            )
+            ))
             if not analyzed:
                 continue
             db.checks.record_achievement(

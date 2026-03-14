@@ -307,6 +307,12 @@ class TaskStatusRepository:
                 .filter_by(task=task, variant=variant, group=group) \
                 .update(dict(achievements=achievements))
 
+    def record_output(self, task: int, variant: int, group: int, output: str | None):
+        with self.db.create_session() as session:
+            session.query(TaskStatus) \
+                .filter_by(task=task, variant=variant, group=group) \
+                .update(dict(output=output))
+
     def clear_achievements(self):
         with self.db.create_session() as session:
             session.query(TaskStatus) \
@@ -560,6 +566,12 @@ class MessageCheckRepository:
             session.query(MessageCheck) \
                 .filter_by(id=check) \
                 .update(dict(achievement=achievement))
+
+    def record_output(self, check: int, output: str | None):
+        with self.db.create_session() as session:
+            session.query(MessageCheck) \
+                .filter_by(id=check) \
+                .update(dict(output=output))
 
     def record_check(
         self,
