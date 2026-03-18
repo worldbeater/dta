@@ -114,11 +114,7 @@ class TaskStatusDto:
         self.checked = self.status in [Status.Checked, Status.CheckedSubmitted, Status.CheckedFailed]
         self.readonly = config.readonly
         self.achievements = self.map_achievements(status, achievements)
-        self.error_message = status.output if self.status in [
-            Status.Failed,
-            Status.CheckedFailed,
-            Status.VerifiedFailed,
-        ] else None
+        self.error_message = status.output if status else None
 
     @property
     def submission_url(self) -> str:
@@ -189,6 +185,20 @@ class TaskStatusDto:
             Status.VerifiedFailed: "success",
             Status.Failed: "danger",
             Status.NotSubmitted: "secondary",
+        })
+
+    @property
+    def output_title(self) -> str:
+        return self.map_status({
+            Status.Submitted: "Подробности последней проверки:",
+            Status.Checked: "Подробности проверки:",
+            Status.CheckedSubmitted: "Подробности последней проверки:",
+            Status.CheckedFailed: "Подробные сведения об ошибке:",
+            Status.Verified: "Подробности проверки:",
+            Status.VerifiedSubmitted: "Подробности последней проверки:",
+            Status.VerifiedFailed: "Подробные сведения об ошибке:",
+            Status.Failed: "Подробные сведения об ошибке:",
+            Status.NotSubmitted: "Подробности проверки:",
         })
 
     @property

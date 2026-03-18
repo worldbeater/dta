@@ -56,7 +56,7 @@
     </span>
   </div>
   {% if status.error_message is not none and status.error_message and (not registration or student) %}
-  <div>Подробные сведения об ошибке:</div>
+  <div>{{ status.output_title }}</div>
   <div class="text-muted mb-2" style="white-space: pre-wrap">{{ status.error_message | e }}</div>
   {% else %}
   <div class="mb-2"></div>

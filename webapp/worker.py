@@ -41,6 +41,34 @@ def analyze_solution(analytics_path: str, task: int, code: str):
     return analyze_solution(task, code)
 
 
+def get_solution_title(order: int):
+    if order == 0:
+        return 'Самое популярное решение'
+    return f'{order + 1}-е по популярности решение'
+
+
+def create_analysis_report(order: int, probabilities: list[float]):
+    if not probabilities:
+        return None
+    lines = ['Вероятности модели:']
+    for index, probability in enumerate(probabilities):
+        mark = ' ✓' if index == order else ''
+        percent = probability * 100
+        formatted = '{:.2f}'.format(percent)
+        lines.append(f'{get_solution_title(index)}{mark}: {formatted}%')
+    return '\n'.join(lines)
+
+
+def get_analysis_result(result):
+    analyzed, payload = result
+    match payload:
+        case (order, probabilities):
+            report = create_analysis_report(order, probabilities)
+            return analyzed, order, report
+        case _:
+            return analyzed, payload, None
+
+
 def process_pending_messages(config: AppConfig, db: AppDatabase, external: ExternalTaskManager):
     pending_messages = db.messages.get_pending_messages()
     message_count = len(pending_messages)
@@ -77,23 +105,25 @@ def process_pending_messages(config: AppConfig, db: AppDatabase, external: Exter
             check = db.checks.record_check(message.id, status.status, error)
             if not ok:
                 continue
-            analyzed, order = analyze_solution(
+            analyzed, order, report = get_analysis_result(analyze_solution(
                 analytics_path=config.analytics_path,
                 code=message.code,
                 task=ext.task,
-            )
+            ))
             print(f'Analysis result: {analyzed}, {order}')
             if not analyzed:
                 continue
-            db.checks.record_achievement(
+            db.checks.record_analytics(
                 check=check.id,
-                achievement=order
+                achievement=order,
+                output=report,
             )
-            db.statuses.record_achievement(
+            db.statuses.record_analytics(
                 task=message.task,
                 variant=message.variant,
                 group=message.group,
                 achievement=order,
+                output=report,
             )
         except BaseException:
             exception = get_exception_info()
