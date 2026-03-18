@@ -50,12 +50,12 @@ def get_solution_title(order: int):
 def create_analysis_report(order: int, probabilities: list[float]):
     if not probabilities:
         return None
-    lines = ['Вероятности модели:']
+    lines = []
     for index, probability in enumerate(probabilities):
         mark = ' ✓' if index == order else ''
         percent = probability * 100
         formatted = '{:.2f}'.format(percent)
-        lines.append(f'{get_solution_title(index)}{mark}: {formatted}%')
+        lines.append(f'− {get_solution_title(index)}: {formatted}%{mark}')
     return '\n'.join(lines)
 
 

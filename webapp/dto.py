@@ -190,15 +190,15 @@ class TaskStatusDto:
     @property
     def output_title(self) -> str:
         return self.map_status({
-            Status.Submitted: "Подробности последней проверки:",
-            Status.Checked: "Подробности проверки:",
-            Status.CheckedSubmitted: "Подробности последней проверки:",
+            Status.NotSubmitted: "",
+            Status.Submitted: "",
+            Status.CheckedSubmitted: "",
+            Status.VerifiedSubmitted: "",
             Status.CheckedFailed: "Подробные сведения об ошибке:",
-            Status.Verified: "Подробности проверки:",
-            Status.VerifiedSubmitted: "Подробности последней проверки:",
             Status.VerifiedFailed: "Подробные сведения об ошибке:",
             Status.Failed: "Подробные сведения об ошибке:",
-            Status.NotSubmitted: "Подробности проверки:",
+            Status.Checked: "Оценки уверенности модели в принадлежности решения к каждому способу:",
+            Status.Verified: "Оценки уверенности модели в принадлежности решения к каждому способу:",
         })
 
     @property
