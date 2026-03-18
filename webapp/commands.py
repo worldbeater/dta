@@ -86,11 +86,11 @@ class AnalyzeCmd:
             ))
             if not analyzed:
                 continue
-            db.checks.record_achievement(
+            db.checks.record_analytics(
                 check=check.id,
                 achievement=order
             )
-            db.statuses.record_achievement(
+            db.statuses.record_analytics(
                 task=message.task,
                 variant=message.variant,
                 group=message.group,

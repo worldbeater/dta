@@ -297,21 +297,25 @@ class TaskStatusRepository:
                 .delete()
             return status
 
-    def record_achievement(self, task: int, variant: int, group: int, achievement: int):
+    def record_analytics(
+        self,
+        task: int,
+        variant: int,
+        group: int,
+        achievement: int,
+        output: str | None = None,
+    ):
         existing = self.get_task_status(task, variant, group)
         if not existing:
             return
         achievements = list(set(existing.achievements + [achievement]))
+        values = dict(achievements=achievements)
+        if output is not None:
+            values["output"] = output
         with self.db.create_session() as session:
             session.query(TaskStatus) \
                 .filter_by(task=task, variant=variant, group=group) \
-                .update(dict(achievements=achievements))
-
-    def record_output(self, task: int, variant: int, group: int, output: str | None):
-        with self.db.create_session() as session:
-            session.query(TaskStatus) \
-                .filter_by(task=task, variant=variant, group=group) \
-                .update(dict(output=output))
+                .update(values)
 
     def clear_achievements(self):
         with self.db.create_session() as session:
@@ -561,17 +565,14 @@ class MessageCheckRepository:
                 .order_by(desc(Message.time)) \
                 .count()
 
-    def record_achievement(self, check: int, achievement: int):
+    def record_analytics(self, check: int, achievement: int, output: str | None = None):
+        values = dict(achievement=achievement)
+        if output is not None:
+            values["output"] = output
         with self.db.create_session() as session:
             session.query(MessageCheck) \
                 .filter_by(id=check) \
-                .update(dict(achievement=achievement))
-
-    def record_output(self, check: int, output: str | None):
-        with self.db.create_session() as session:
-            session.query(MessageCheck) \
-                .filter_by(id=check) \
-                .update(dict(output=output))
+                .update(values)
 
     def record_check(
         self,

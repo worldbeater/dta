@@ -61,11 +61,12 @@ def create_analysis_report(order: int, probabilities: list[float]):
 
 def get_analysis_result(result):
     analyzed, payload = result
-    if isinstance(payload, tuple) and len(payload) == 2:
-        order, probabilities = payload
-        report = create_analysis_report(order, probabilities)
-        return analyzed, order, report
-    return analyzed, payload, None
+    match payload:
+        case (order, probabilities):
+            report = create_analysis_report(order, probabilities)
+            return analyzed, order, report
+        case _:
+            return analyzed, payload, None
 
 
 def process_pending_messages(config: AppConfig, db: AppDatabase, external: ExternalTaskManager):
@@ -112,18 +113,17 @@ def process_pending_messages(config: AppConfig, db: AppDatabase, external: Exter
             print(f'Analysis result: {analyzed}, {order}')
             if not analyzed:
                 continue
-            if report is not None:
-                db.checks.record_output(check.id, report)
-                db.statuses.record_output(message.task, message.variant, message.group, report)
-            db.checks.record_achievement(
+            db.checks.record_analytics(
                 check=check.id,
-                achievement=order
+                achievement=order,
+                output=report,
             )
-            db.statuses.record_achievement(
+            db.statuses.record_analytics(
                 task=message.task,
                 variant=message.variant,
                 group=message.group,
                 achievement=order,
+                output=report,
             )
         except BaseException:
             exception = get_exception_info()
