@@ -331,9 +331,12 @@ def login_with_lks_callback():
         config.config.lks_oauth_client_id,
         config.config.lks_oauth_client_secret,
         scope='basic')
-    response = oauth.fetch_token(token_ep, authorization_response=request.url)
+    response = oauth.fetch_token(token_ep, authorization_response=request.url, timeout=3)
     access_token = response['access_token']
-    info = requests.get(userinfo_ep, headers={'Authorization': f'Bearer {access_token}'}).json()
+    with requests.get(userinfo_ep, headers={'Authorization': f'Bearer {access_token}'}, timeout=3) as response:
+        info = response.json()
+    if not info:
+        return redirect("/")
     email = info['username']
     if not email:
         return redirect("/")
