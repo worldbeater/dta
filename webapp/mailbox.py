@@ -49,7 +49,7 @@ def background_worker(login: str, password: str, connection: str):
                 print(f'Received {length} emails! Processing...')
                 for email in senders:
                     student = db.students.find_by_email(email)
-                    if student and not student.teacher:
+                    if student:
                         db.students.confirm(email)
                 print(f'Successfully processed {length} emails.')
         except ConnectionResetError:
