@@ -8,6 +8,7 @@ from flask_jwt_extended import create_access_token, set_access_cookies, unset_jw
 from flask_jwt_extended.exceptions import JWTExtendedException
 from flask_paginate import Pagination
 from jwt.exceptions import PyJWTError
+from jwt import decode
 
 from flask import Blueprint, Response
 from flask import current_app as app
@@ -336,10 +337,13 @@ def login_with_lks_callback():
     print('Fetching token from', token_ep)
     response = oauth.fetch_token(token_ep, authorization_response=request.url, timeout=3)
     access_token = response['access_token']
-    userinfo_ep = config.config.lks_userinfo_endpoint
-    print('Fetching userinfo from', userinfo_ep)
-    response = requests.get(userinfo_ep, headers={'Authorization': f'Bearer {access_token}'}, timeout=3)
-    info = response.json()
+    if len(access_token) > 30:
+        info = decode(access_token, options={'verify_signature': False})
+    else:
+        userinfo_ep = config.config.lks_userinfo_endpoint
+        print('Fetching userinfo from', userinfo_ep)
+        response = requests.get(userinfo_ep, headers={'Authorization': f'Bearer {access_token}'}, timeout=3)
+        info = response.json()
     email = info['username']
     if not email:
         return redirect("/")
