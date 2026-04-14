@@ -350,6 +350,20 @@ def login_with_lks_callback():
     return response
 
 
+@blueprint.route("/logout/lks/backchannel", methods=["GET", "POST"])
+def backchannel_logout():
+    logout_token = request.form.get('logout_token', '')
+    print('Logout requested for:', logout_token[0:5])
+    return "OK", 200
+
+
+@blueprint.route("/logout", methods=['GET'])
+def do_logout():
+    response = redirect("/")
+    unset_jwt_cookies(response)
+    return response
+
+
 @blueprint.route("/register", methods=["GET", "POST"])
 @logout(config, "/register")
 def register():
@@ -376,13 +390,6 @@ def change_password():
         group_rating=config.config.groups,
         form=form
     )
-
-
-@blueprint.route("/logout", methods=['GET'])
-def do_logout():
-    response = redirect("/")
-    unset_jwt_cookies(response)
-    return response
 
 
 @blueprint.errorhandler(Exception)
