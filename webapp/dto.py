@@ -36,6 +36,7 @@ class AppConfig:
         self.lks_oauth_client_id: str = config["LKS_OAUTH_CLIENT_ID"]
         self.lks_oauth_client_secret: str = config["LKS_OAUTH_CLIENT_SECRET"]
         self.lks_authorization_endpoint: str = config["LKS_AUTHORIZATION_ENDPOINT"]
+        self.lks_scope: str = config["LKS_SCOPE"]
         self.lks_token_endpoint: str = config["LKS_TOKEN_ENDPOINT"]
         self.lks_userinfo_endpoint: str = config["LKS_USERINFO_ENDPOINT"]
         self.lks_redirect_url: str = config["LKS_REDIRECT_URL"]

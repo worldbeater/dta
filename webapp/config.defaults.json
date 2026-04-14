@@ -22,6 +22,7 @@
     "LKS_TOKEN_ENDPOINT": "https://login.mirea.ru/oauth2/v1/token/",
     "LKS_USERINFO_ENDPOINT": "https://login.mirea.ru/resources/v1/userinfo",
     "LKS_REDIRECT_URL": "https://kispython.ru/login/lks/callback",
+    "LKS_SCOPE": "basic",
     "PLACES_IN_RATING": 8,
     "PLACES_IN_GROUP": 30,
     "GROUPS": {},

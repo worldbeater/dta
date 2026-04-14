@@ -11,7 +11,7 @@ from jwt.exceptions import PyJWTError
 
 from flask import Blueprint, Response
 from flask import current_app as app
-from flask import redirect, render_template, request, send_from_directory
+from flask import redirect, render_template, request, send_from_directory, url_for
 
 from webapp.forms import StudentChangePasswordForm, StudentLoginForm, StudentMessageForm, StudentRegisterForm
 from webapp.managers import (
@@ -54,6 +54,8 @@ def set_anonymous_identifier(response: Response) -> Response:
 @blueprint.route("/", methods=["GET"])
 @authorize(db.students)
 def dashboard(student: Student | None):
+    if 'state' in request.args: # OIDC redirect
+        return redirect(url_for("student.login_with_lks_callback", **request.args))
     if config.config.registration and student and student.group is not None:
         if student.variant is not None:
             return redirect("/home")
@@ -314,7 +316,7 @@ def login_with_lks():
     oauth = OAuth2Session(
         config.config.lks_oauth_client_id,
         config.config.lks_oauth_client_secret,
-        scope='basic')
+        scope=config.config.lks_scope)
     auth_ep = config.config.lks_authorization_endpoint
     print('Creating authorization URL for', auth_ep)
     uri, _ = oauth.create_authorization_url(auth_ep)
@@ -329,7 +331,7 @@ def login_with_lks_callback():
     oauth = OAuth2Session(
         config.config.lks_oauth_client_id,
         config.config.lks_oauth_client_secret,
-        scope='basic')
+        scope=config.config.lks_scope)
     token_ep = config.config.lks_token_endpoint
     print('Fetching token from', token_ep)
     response = oauth.fetch_token(token_ep, authorization_response=request.url, timeout=3)
