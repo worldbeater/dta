@@ -311,11 +311,12 @@ def login():
 def login_with_lks():
     if not config.config.enable_lks_oauth:
         return redirect("/")
-    auth_ep = f'{config.config.lks_api_base_url}/oauth2/v1/authorize'
     oauth = OAuth2Session(
         config.config.lks_oauth_client_id,
         config.config.lks_oauth_client_secret,
         scope='basic')
+    auth_ep = config.config.lks_authorization_endpoint
+    print('Creating authorization URL for', auth_ep)
     uri, _ = oauth.create_authorization_url(auth_ep)
     return redirect(uri)
 
@@ -325,18 +326,18 @@ def login_with_lks():
 def login_with_lks_callback():
     if not config.config.enable_lks_oauth:
         return redirect("/")
-    token_ep = f'{config.config.lks_api_base_url}/oauth2/v1/token/'
-    userinfo_ep = f'{config.config.lks_api_base_url}/resources/v1/userinfo'
     oauth = OAuth2Session(
         config.config.lks_oauth_client_id,
         config.config.lks_oauth_client_secret,
         scope='basic')
+    token_ep = config.config.lks_token_endpoint
+    print('Fetching token from', token_ep)
     response = oauth.fetch_token(token_ep, authorization_response=request.url, timeout=3)
     access_token = response['access_token']
-    with requests.get(userinfo_ep, headers={'Authorization': f'Bearer {access_token}'}, timeout=3) as response:
-        info = response.json()
-    if not info:
-        return redirect("/")
+    userinfo_ep = config.config.lks_userinfo_endpoint
+    print('Fetching userinfo from', userinfo_ep)
+    response = requests.get(userinfo_ep, headers={'Authorization': f'Bearer {access_token}'}, timeout=3)
+    info = response.json()
     email = info['username']
     if not email:
         return redirect("/")
