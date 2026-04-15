@@ -173,7 +173,7 @@ class TaskStatusDto:
             Status.VerifiedSubmitted: "✓",
             Status.VerifiedFailed: "✓",
             Status.Failed: "x",
-            Status.NotSubmitted: "−" if self.disabled else "⋅",
+            Status.NotSubmitted: "−" if self.disabled(False) else "⋅",
         })
 
     @property
@@ -231,9 +231,8 @@ class TaskStatusDto:
             Status.VerifiedFailed,
         ]
 
-    @property
-    def disabled(self) -> bool:
-        lasting = not self.deadline or self.deadline > datetime.now()
+    def disabled(self, teacher: bool) -> bool:
+        lasting = teacher or not self.deadline or self.deadline > datetime.now()
         return not self.external.active or self.readonly or not lasting
 
     def map_achievements(self, status: TaskStatus | None, achievements: list[int]):

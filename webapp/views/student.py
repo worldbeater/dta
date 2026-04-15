@@ -208,7 +208,7 @@ def task(student: Student | None, gid: int, vid: int, tid: int):
         return redirect("/")
     status = statuses.get_task_status(gid, vid, tid, student)
     foreign = student and not student.teacher and (student.group != gid or student.variant != vid)
-    disabled = status.disabled or config.config.registration and foreign
+    disabled = status.disabled(student.teacher) or config.config.registration and foreign
     form = StudentMessageForm()
     return render_template(
         "student/task.jinja",
@@ -233,7 +233,7 @@ def submit_task(student: Student | None, gid: int, vid: int, tid: int):
         return redirect("/")
     status = statuses.get_task_status(gid, vid, tid, student)
     foreign = student and not student.teacher and (student.group != gid or student.variant != vid)
-    disabled = status.disabled or config.config.registration and foreign
+    disabled = status.disabled(student.teacher) or config.config.registration and foreign
     form = StudentMessageForm()
     ip = get_real_ip(request)
     if form.validate_on_submit() and not disabled and db.ips.is_allowed(ip):

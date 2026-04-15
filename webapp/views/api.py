@@ -73,7 +73,7 @@ def submit_task(gid: int, vid: int, tid: int):
     if not CodeLength.min < len(code) < CodeLength.max:
         raise ValueError("Code length is invalid.")
     status = statuses.get_task_status(gid, vid, tid, None)
-    if status.disabled:
+    if status.disabled(False):
         raise ValueError("Submissions are disallowed.")
     ip = get_real_ip(request)
     db.messages.submit_task(tid, vid, gid, code, ip, None)
