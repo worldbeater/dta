@@ -33,6 +33,7 @@ from webapp.utils import authorize, get_exception_info, get_greeting_msg, get_re
 blueprint = Blueprint("student", __name__)
 config = AppConfigManager(lambda: app.config)
 db = AppDatabase(lambda: config.config.connection_string)
+jwks = PyJWKClient(str(), timeout=3, cache_keys=True, cache_jwk_set=True)
 
 ach = AchievementManager(config)
 ext = ExternalTaskManager(db.groups, db.tasks)
@@ -341,7 +342,7 @@ def login_with_lks_callback():
     access_token = response['access_token']
     if len(access_token) > 30:
         print('[Callback] Fetching JWKs from:', config.config.lks_jwks_uri)
-        jwks = PyJWKClient(config.config.lks_jwks_uri, timeout=3)
+        jwks.uri = config.config.lks_jwks_uri
         jkey = jwks.get_signing_key_from_jwt(access_token)
         info = decode(access_token, jkey.key, ['RS256'], {'verify_aud': False})
         print('[Callback] OIDC session decoded:', info['sid'])
@@ -369,7 +370,7 @@ def login_with_lks_callback():
 def backchannel_logout():
     logout_token = request.form['logout_token']
     print('[Backchannel] Fetching JWKs from:', config.config.lks_jwks_uri)
-    jwks = PyJWKClient(config.config.lks_jwks_uri, timeout=3)
+    jwks.uri = config.config.lks_jwks_uri
     jkey = jwks.get_signing_key_from_jwt(logout_token)
     token = decode(logout_token, jkey.key, ['RS256'], audience=config.config.lks_oauth_client_id)
     print('[Backchannel] OIDC session decoded:', token['sid'])

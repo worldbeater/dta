@@ -40,8 +40,7 @@ def test_oidc_backchannel_logout(db: AppDatabase, client: FlaskClient):
     pub = key.public_key().public_bytes(Encoding.PEM, PublicFormat.SubjectPublicKeyInfo)
     tok = jwt.encode(payload, key, algorithm="RS256")
 
-    with patch('webapp.views.student.PyJWKClient') as JWK:
-        JWK.return_value = MockPyJWKClient(pub)
+    with patch('webapp.views.student.jwks', MockPyJWKClient(pub)):
         response = client.post(
             '/logout/lks/backchannel',
             data={'logout_token': tok},
