@@ -8,7 +8,7 @@ from datetime import datetime
 from functools import wraps
 from typing import Callable
 
-from flask_jwt_extended import get_jwt_identity, unset_jwt_cookies, verify_jwt_in_request
+from flask_jwt_extended import get_jwt, get_jwt_identity, unset_jwt_cookies, verify_jwt_in_request
 from jwt import PyJWTError
 
 from flask import Request, redirect
@@ -53,6 +53,10 @@ def authorize(students: StudentRepository, check: Callable[[Student], bool] | No
             identity = get_jwt_identity()
             if identity is None:
                 return function(None, *args, **kwargs)
+            claims = get_jwt()
+            sid = claims.get("sid")
+            if sid and students.is_session_blocked(sid):
+                raise PyJWTError()
             student = students.get_by_id(identity)
             if not check or check(student):
                 return function(student, *args, **kwargs)

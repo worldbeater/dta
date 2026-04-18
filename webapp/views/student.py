@@ -7,7 +7,7 @@ from authlib.integrations.requests_client import OAuth2Session
 from flask_jwt_extended import create_access_token, set_access_cookies, unset_jwt_cookies
 from flask_jwt_extended.exceptions import JWTExtendedException
 from flask_paginate import Pagination
-from jwt import decode
+from jwt import PyJWKClient, decode
 from jwt.exceptions import PyJWTError
 
 from flask import Blueprint, Response
@@ -336,16 +336,22 @@ def login_with_lks_callback():
         redirect_uri=config.config.lks_redirect_url,
         scope=config.config.lks_scope)
     token_ep = config.config.lks_token_endpoint
-    print('Fetching token from', token_ep)
+    print('[Callback] Fetching access_token from:', token_ep)
     response = oauth.fetch_token(token_ep, authorization_response=request.url, timeout=3)
     access_token = response['access_token']
     if len(access_token) > 30:
-        info = decode(access_token, options={'verify_signature': False})
+        print('[Callback] Fetching JWKs from:', config.config.lks_jwks_uri)
+        jwks = PyJWKClient(config.config.lks_jwks_uri, timeout=3)
+        jkey = jwks.get_signing_key_from_jwt(access_token)
+        info = decode(access_token, jkey.key, ['RS256'], {'verify_aud': False})
+        print('[Callback] OIDC session decoded:', info['sid'])
+        claims = {'sid': info['sid']}
     else:
         userinfo_ep = config.config.lks_userinfo_endpoint
-        print('Fetching userinfo from', userinfo_ep)
+        print('[Callback] Fetching username from:', userinfo_ep)
         response = requests.get(userinfo_ep, headers={'Authorization': f'Bearer {access_token}'}, timeout=3)
         info = response.json()
+        claims = {}
     email = info['username']
     if not email:
         return redirect("/")
@@ -355,14 +361,21 @@ def login_with_lks_callback():
         if not student:
             student = db.students.create_external(email, 'lks')
     response = redirect("/")
-    set_access_cookies(response, create_access_token(identity=student.id))
+    set_access_cookies(response, create_access_token(identity=student.id, additional_claims=claims))
     return response
 
 
 @blueprint.route("/logout/lks/backchannel", methods=["GET", "POST"])
 def backchannel_logout():
-    logout_token = request.form.get('logout_token', '')
-    print('Logout requested for:', logout_token[0:5])
+    logout_token = request.form['logout_token']
+    print('[Backchannel] Fetching JWKs from:', config.config.lks_jwks_uri)
+    jwks = PyJWKClient(config.config.lks_jwks_uri, timeout=3)
+    jkey = jwks.get_signing_key_from_jwt(logout_token)
+    token = decode(logout_token, jkey.key, ['RS256'], {'verify_aud': False})
+    print('[Backchannel] OIDC session decoded:', token['sid'])
+    db.students.rotate_blocked_external_sessions(config.config.auth_token_ttl)
+    db.students.block_external_session(token['sid'])
+    print('[Backchannel] OIDC session blocked.')
     return "OK", 200
 
 
