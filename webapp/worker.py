@@ -140,7 +140,7 @@ def background_worker(config: AppConfig):
         except BaseException:
             exception = get_exception_info()
             print(f"Error occured inside the loop: {exception}")
-        time.sleep(10)
+        time.sleep(5)
 
 
 def start_background_worker(config: AppConfig):
