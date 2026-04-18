@@ -369,7 +369,7 @@ def login_with_lks_callback():
 def backchannel_logout():
     logout_token = request.form['logout_token']
     print('[Backchannel] Fetching JWKs from:', config.config.lks_jwks_uri)
-    jwks = PyJWKClient(config.config.lks_jwks_uri)
+    jwks = PyJWKClient(config.config.lks_jwks_uri, timeout=3)
     jkey = jwks.get_signing_key_from_jwt(logout_token)
     token = decode(logout_token, key=jkey.key, audience=config.config.lks_oauth_client_id, algorithms=['RS256'])
     print('[Backchannel] OIDC session decoded:', token['sid'])
