@@ -343,7 +343,7 @@ def login_with_lks_callback():
         print('[Callback] Fetching JWKs from:', config.config.lks_jwks_uri)
         jwks = PyJWKClient(config.config.lks_jwks_uri, timeout=3)
         jkey = jwks.get_signing_key_from_jwt(access_token)
-        info = decode(access_token, key=jkey.key, audience=config.config.lks_oauth_client_id, algorithms=['RS256'])
+        info = decode(access_token, jkey.key, ['RS256'], {'verify_aud': False})
         print('[Callback] OIDC session decoded:', info['sid'])
         claims = {'sid': info['sid']}
     else:
@@ -371,7 +371,7 @@ def backchannel_logout():
     print('[Backchannel] Fetching JWKs from:', config.config.lks_jwks_uri)
     jwks = PyJWKClient(config.config.lks_jwks_uri, timeout=3)
     jkey = jwks.get_signing_key_from_jwt(logout_token)
-    token = decode(logout_token, key=jkey.key, audience=config.config.lks_oauth_client_id, algorithms=['RS256'])
+    token = decode(logout_token, jkey.key, ['RS256'], {'verify_aud': False})
     print('[Backchannel] OIDC session decoded:', token['sid'])
     db.students.rotate_blocked_external_sessions(config.config.auth_token_ttl)
     db.students.block_external_session(token['sid'])
