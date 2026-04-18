@@ -2,8 +2,8 @@ from datetime import datetime, timedelta, timezone
 from unittest.mock import patch
 
 import jwt
-from cryptography.hazmat.primitives.serialization import Encoding, PublicFormat
 from cryptography.hazmat.primitives.asymmetric import rsa
+from cryptography.hazmat.primitives.serialization import Encoding, PublicFormat
 from tests.utils import unique_str
 
 from flask.testing import FlaskClient
