@@ -371,7 +371,7 @@ def backchannel_logout():
     print('[Backchannel] Fetching JWKs from:', config.config.lks_jwks_uri)
     jwks = PyJWKClient(config.config.lks_jwks_uri, timeout=3)
     jkey = jwks.get_signing_key_from_jwt(logout_token)
-    token = decode(logout_token, jkey.key, ['RS256'], {'verify_aud': False})
+    token = decode(logout_token, jkey.key, ['RS256'], audience=config.config.lks_oauth_client_id)
     print('[Backchannel] OIDC session decoded:', token['sid'])
     db.students.rotate_blocked_external_sessions(config.config.auth_token_ttl)
     db.students.block_external_session(token['sid'])
