@@ -20,6 +20,7 @@ from webapp.models import (
     TaskStatus,
     TypeOfTask,
     Variant,
+    BlockedExternalSession,
     create_session_maker
 )
 
@@ -720,6 +721,26 @@ class StudentRepository:
             session.query(Student) \
                 .filter_by(id=student) \
                 .update(dict(variant=variant_id))
+
+    def is_session_blocked(self, sid: str):
+        with self.db.create_session() as session:
+            return session.query(BlockedExternalSession) \
+                .filter_by(sid=sid) \
+                .first() is not None
+
+    def block_external_session(self, sid: str):
+        now = datetime.datetime.now()
+        with self.db.create_session() as session:
+            blocked = BlockedExternalSession(sid=sid, time=now)
+            session.add(blocked)
+            return blocked
+
+    def rotate_blocked_external_sessions(self, seconds: int):
+        cutoff = datetime.datetime.now() - datetime.timedelta(seconds=seconds)
+        with self.db.create_session() as session:
+            session.query(BlockedExternalSession).filter(
+                BlockedExternalSession.time < cutoff
+            ).delete()
 
 
 class MailerRepository:

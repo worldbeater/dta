@@ -341,11 +341,13 @@ def login_with_lks_callback():
     access_token = response['access_token']
     if len(access_token) > 30:
         info = decode(access_token, options={'verify_signature': False})
+        claims = {'sid': info['sid']}
     else:
         userinfo_ep = config.config.lks_userinfo_endpoint
         print('Fetching userinfo from', userinfo_ep)
         response = requests.get(userinfo_ep, headers={'Authorization': f'Bearer {access_token}'}, timeout=3)
         info = response.json()
+        claims = {}
     email = info['username']
     if not email:
         return redirect("/")
@@ -355,14 +357,17 @@ def login_with_lks_callback():
         if not student:
             student = db.students.create_external(email, 'lks')
     response = redirect("/")
-    set_access_cookies(response, create_access_token(identity=student.id))
+    set_access_cookies(response, create_access_token(identity=student.id, additional_claims=claims))
     return response
 
 
 @blueprint.route("/logout/lks/backchannel", methods=["GET", "POST"])
 def backchannel_logout():
-    logout_token = request.form.get('logout_token', '')
+    logout_token = request.form['logout_token']
     print('Logout requested for:', logout_token[0:5])
+    token = decode(logout_token, options={'verify_signature': False})
+    db.students.rotate_blocked_external_sessions(config.config.auth_token_ttl)
+    db.students.block_external_session(token['sid'])
     return "OK", 200
 
 

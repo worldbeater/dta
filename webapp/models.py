@@ -175,3 +175,9 @@ class AllowedIp(Base):
     id = sa.Column("id", sa.Integer, primary_key=True, nullable=False, autoincrement=True)
     ip = sa.Column("ip", sa.String, nullable=False)
     label = sa.Column("label", sa.String, nullable=True)
+
+
+class BlockedExternalSession(Base):
+    __tablename__ = "blocked_external_sessions"
+    sid = sa.Column("sid", sa.String, primary_key=True, nullable=False)
+    time = sa.Column("time", sa.DateTime, nullable=False)
