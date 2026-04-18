@@ -7,6 +7,7 @@ from sqlalchemy.orm import Session
 
 from webapp.models import (
     AllowedIp,
+    BlockedExternalSession,
     DeadlineOverride,
     FinalSeed,
     Group,
@@ -20,7 +21,6 @@ from webapp.models import (
     TaskStatus,
     TypeOfTask,
     Variant,
-    BlockedExternalSession,
     create_session_maker
 )
 

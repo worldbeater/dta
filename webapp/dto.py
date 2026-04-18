@@ -40,6 +40,7 @@ class AppConfig:
         self.lks_token_endpoint: str = config["LKS_TOKEN_ENDPOINT"]
         self.lks_userinfo_endpoint: str = config["LKS_USERINFO_ENDPOINT"]
         self.lks_redirect_url: str = config["LKS_REDIRECT_URL"]
+        self.lks_jwks_uri: str = config["LKS_JWKS_URI"]
         self.auth_token_ttl: int = config["AUTH_TOKEN_TTL"]
         self.places_in_rating: int = config["PLACES_IN_RATING"]
         self.places_in_group: int = config["PLACES_IN_GROUP"]

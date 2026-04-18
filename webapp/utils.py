@@ -8,7 +8,7 @@ from datetime import datetime
 from functools import wraps
 from typing import Callable
 
-from flask_jwt_extended import get_jwt_identity, unset_jwt_cookies, verify_jwt_in_request, get_jwt
+from flask_jwt_extended import get_jwt, get_jwt_identity, unset_jwt_cookies, verify_jwt_in_request
 from jwt import PyJWTError
 
 from flask import Request, redirect
