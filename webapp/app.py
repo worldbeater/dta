@@ -25,7 +25,7 @@ def configure_app(directory: str) -> Flask:
     app.config["JWT_TOKEN_LOCATION"] = ["cookies"]
     app.config["JWT_COOKIE_SECURE"] = False
     app.config["JWT_COOKIE_CSRF_PROTECT"] = False
-    app.config["JWT_ACCESS_TOKEN_EXPIRES"] = timedelta(hours=6)
+    app.config["JWT_ACCESS_TOKEN_EXPIRES"] = timedelta(seconds=int(config["AUTH_TOKEN_TTL"]))
     app.config["JWT_VERIFY_SUB"] = False
     app.config["JSON_AS_ASCII"] = False
     app.config["JSONIFY_PRETTYPRINT_REGULAR"] = False
