@@ -134,6 +134,7 @@
       </button>
     </form>
   </div>
+  {% if not exam %}
   <div class="col-12 mb-3">
     <b class="card-title d-block">Управление аккаунтом студента</b>
     <form action="/teacher/student" method="GET" class="w-100">
@@ -164,5 +165,6 @@
       </button>
     </form>
   </div>
+  {% endif %}
 </div>
 {% endblock %}
